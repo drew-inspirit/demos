@@ -1,0 +1,1548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent Bridge — Inspirit AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=VT323&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --text: #f5f1e8;
+    --text-muted: #a8a29e;
+    --text-soft: #6b6258;
+    --green: #4ade80;
+    --green-glow: rgba(74, 222, 128, 0.4);
+    --amber: #fbbf24;
+    --red: #ef4444;
+    --pink: #ff6fb5;
+    --border: rgba(255,255,255,0.12);
+    --surface: rgba(20, 28, 56, 0.92);
+    --pixel: 'VT323', monospace;
+    --font: 'Inter', system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    font-family: var(--font);
+    background: #0a0e2a;
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    transition: background 0.8s ease;
+  }
+  body.scene-desert { background: #2a1810; }
+  body.scene-forest { background: #0a1e14; }
+  body.scene-castle { background: #1a0a2a; }
+
+  body { padding: 1.5rem 1rem 3rem; }
+  .page { max-width: 1000px; margin: 0 auto; }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding: 0 4px;
+  }
+  .brand {
+    font-family: var(--pixel);
+    font-size: 22px;
+    color: var(--green);
+    letter-spacing: 0.08em;
+    text-shadow: 0 0 8px var(--green-glow);
+  }
+  .stats {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-family: var(--pixel);
+    font-size: 20px;
+  }
+  .stat { color: var(--text-muted); letter-spacing: 0.04em; }
+  .stat-val { color: var(--text); font-variant-numeric: tabular-nums; }
+  .lives {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+  .life {
+    width: 12px;
+    height: 12px;
+    background: var(--red);
+    border-radius: 2px;
+    border: 1px solid rgba(255,255,255,0.3);
+    transition: opacity 0.4s, transform 0.3s;
+  }
+  .life.lost { opacity: 0.2; transform: scale(0.7); }
+  .streak {
+    display: none;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 10px;
+    background: rgba(251, 191, 36, 0.15);
+    border: 1px solid var(--amber);
+    border-radius: 4px;
+    color: var(--amber);
+    animation: streakIn 0.3s ease;
+  }
+  .streak.show { display: inline-flex; }
+  @keyframes streakIn {
+    from { transform: scale(0.85); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .mission {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 12px;
+    display: none;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .mission.show { display: flex; }
+  .mission-label {
+    font-family: var(--pixel);
+    font-size: 18px;
+    color: var(--green);
+    letter-spacing: 0.06em;
+    flex-shrink: 0;
+  }
+  .mission.boss .mission-label { color: var(--pink); }
+  .mission-text {
+    font-size: 14px;
+    color: var(--text);
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .scene-wrap {
+    background: #0a0e2a;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+    position: relative;
+    transition: background 0.8s ease;
+  }
+  .scene { width: 100%; display: block; height: auto; }
+
+  .query-section { margin-bottom: 1rem; }
+  .section-label {
+    font-family: var(--pixel);
+    font-size: 18px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+    padding: 0 4px;
+  }
+  .query-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 8px;
+  }
+  .qcard {
+    padding: 12px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: left;
+    font-family: var(--font);
+    color: var(--text);
+    position: relative;
+  }
+  .qcard:hover {
+    border-color: var(--green);
+    background: rgba(74, 222, 128, 0.08);
+  }
+  .qcard.boss {
+    border-color: var(--pink);
+    background: rgba(255, 111, 181, 0.08);
+  }
+  .qcard.boss .qcard-label { color: var(--pink); }
+  .qcard.boss:hover {
+    background: rgba(255, 111, 181, 0.15);
+    box-shadow: 0 0 12px rgba(255, 111, 181, 0.3);
+  }
+  .qcard.locked {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+  .qcard.completed {
+    opacity: 0.55;
+    border-color: var(--text-soft);
+  }
+  .qcard.completed::after {
+    content: ' ✓';
+    color: var(--green);
+    font-weight: 600;
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    font-size: 14px;
+  }
+  .qcard-label {
+    font-family: var(--pixel);
+    font-size: 15px;
+    color: var(--green);
+    letter-spacing: 0.06em;
+    margin-bottom: 2px;
+  }
+  .qcard-text {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.3;
+  }
+
+  .quiz {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--amber);
+    border-radius: 8px;
+    padding: 18px 20px;
+    margin-bottom: 1rem;
+    animation: slideIn 0.3s ease;
+    display: none;
+  }
+  .quiz.show { display: block; }
+  .quiz.boss { border-left-color: var(--pink); }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .quiz-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+  .quiz-badge {
+    font-family: var(--pixel);
+    font-size: 16px;
+    background: var(--amber);
+    color: #1a1308;
+    padding: 2px 10px;
+    border-radius: 4px;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+  }
+  .quiz.boss .quiz-badge {
+    background: var(--pink);
+    color: #1a0810;
+  }
+  .quiz-stage {
+    font-family: var(--pixel);
+    font-size: 16px;
+    color: var(--text-muted);
+    letter-spacing: 0.04em;
+  }
+  .quiz-stage-name {
+    font-family: var(--pixel);
+    font-size: 24px;
+    color: var(--green);
+    margin-bottom: 6px;
+    letter-spacing: 0.04em;
+    text-shadow: 0 0 6px var(--green-glow);
+  }
+  .quiz.boss .quiz-stage-name {
+    color: var(--pink);
+    text-shadow: 0 0 6px rgba(255, 111, 181, 0.4);
+  }
+  .quiz-q {
+    font-size: 15px;
+    color: var(--text);
+    line-height: 1.5;
+    margin-bottom: 14px;
+  }
+
+  .opts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 8px;
+  }
+  .opt {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 11px 14px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    text-align: left;
+    font-family: var(--font);
+    font-size: 13.5px;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.12s;
+    line-height: 1.4;
+  }
+  .opt:hover:not(:disabled):not(.eliminated) {
+    border-color: var(--green);
+    background: rgba(74, 222, 128, 0.08);
+  }
+  .opt:disabled { cursor: default; }
+  .opt-letter {
+    font-family: var(--pixel);
+    font-size: 16px;
+    color: var(--green);
+    background: rgba(74, 222, 128, 0.12);
+    border: 1px solid var(--green);
+    padding: 0px 8px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    line-height: 1.4;
+  }
+  .opt.correct {
+    background: rgba(74, 222, 128, 0.18);
+    border-color: var(--green);
+    box-shadow: 0 0 0 1px var(--green);
+  }
+  .opt.eliminated {
+    opacity: 0.4;
+    text-decoration: line-through;
+    text-decoration-color: var(--red);
+    animation: shake 0.4s ease;
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    75% { transform: translateX(4px); }
+  }
+  .opt.eliminated .opt-letter {
+    color: var(--red);
+    border-color: var(--red);
+    background: rgba(239, 68, 68, 0.12);
+  }
+
+  .feedback {
+    margin-top: 12px;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    line-height: 1.5;
+    display: none;
+  }
+  .feedback.show { display: block; }
+  .feedback.hint {
+    background: rgba(251, 191, 36, 0.12);
+    border: 1px solid rgba(251, 191, 36, 0.4);
+    color: var(--amber);
+  }
+  .feedback.danger {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    color: var(--red);
+  }
+  .feedback strong { font-weight: 600; }
+
+  .reveal-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--green);
+    border-radius: 8px;
+    padding: 16px 18px;
+    margin-bottom: 1rem;
+    display: none;
+    animation: slideIn 0.3s ease;
+  }
+  .reveal-panel.show { display: block; }
+  .reveal-panel.boss { border-left-color: var(--pink); }
+  .reveal-label {
+    font-family: var(--pixel);
+    font-size: 16px;
+    color: var(--green);
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+  .reveal-panel.boss .reveal-label { color: var(--pink); }
+  .reveal-text {
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.55;
+    margin-bottom: 10px;
+  }
+  .actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    align-items: center;
+  }
+  .btn {
+    padding: 9px 18px;
+    border-radius: 6px;
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.1s;
+  }
+  .btn-primary {
+    background: var(--green);
+    color: #0a1f0e;
+  }
+  .btn-primary:hover { background: #6ee895; }
+  .btn-pink {
+    background: var(--pink);
+    color: #1a0810;
+  }
+  .btn-pink:hover { background: #ff8cc5; }
+  .btn-secondary {
+    background: rgba(255,255,255,0.08);
+    color: var(--text);
+    border-color: var(--border);
+  }
+
+  .final {
+    background: var(--surface);
+    border: 1px solid var(--green);
+    border-radius: 8px;
+    padding: 28px;
+    text-align: center;
+    display: none;
+    animation: slideIn 0.4s ease;
+    box-shadow: 0 0 30px rgba(74, 222, 128, 0.15);
+  }
+  .final.show { display: block; }
+  .final.boss-win {
+    border-color: var(--pink);
+    box-shadow: 0 0 40px rgba(255, 111, 181, 0.3);
+  }
+  .final.fail {
+    border-color: var(--red);
+    box-shadow: 0 0 30px rgba(239, 68, 68, 0.2);
+  }
+  .final-banner {
+    font-family: var(--pixel);
+    font-size: 32px;
+    color: var(--green);
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+    text-shadow: 0 0 12px var(--green-glow);
+  }
+  .final.boss-win .final-banner {
+    color: var(--pink);
+    text-shadow: 0 0 12px rgba(255, 111, 181, 0.5);
+  }
+  .final.fail .final-banner {
+    color: var(--red);
+    text-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+  }
+  .final-num {
+    font-family: var(--pixel);
+    font-size: 56px;
+    color: var(--text);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .final-detail {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    font-family: var(--pixel);
+    letter-spacing: 0.04em;
+  }
+  .final-msg {
+    font-size: 14px;
+    color: var(--text);
+    margin-top: 12px;
+    line-height: 1.5;
+  }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 8px;
+    padding: 0 4px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .sound-toggle {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-family: var(--pixel);
+    font-size: 14px;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+  }
+  .sound-toggle:hover { background: rgba(255,255,255,0.1); }
+  .kbd-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  kbd {
+    font-family: var(--pixel);
+    font-size: 12px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 6px;
+    color: var(--text);
+  }
+
+  @media (max-width: 560px) {
+    .quiz-stage-name { font-size: 20px; }
+    .quiz-q { font-size: 14px; }
+    .opts { grid-template-columns: 1fr; }
+    .kbd-hint { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="topbar">
+    <div class="brand">▸ AGENT BRIDGE</div>
+    <div class="stats">
+      <div class="streak" id="streak"><span>🔥</span><span id="streakNum">0</span></div>
+      <div class="lives" id="lives" title="Lives remaining">
+        <div class="life" id="life0"></div>
+        <div class="life" id="life1"></div>
+        <div class="life" id="life2"></div>
+      </div>
+      <div class="stat">SCORE <span class="stat-val" id="scoreVal">0/0</span></div>
+    </div>
+  </div>
+
+  <div class="mission" id="mission">
+    <span class="mission-label" id="missionLabel">▸ MISSION</span>
+    <span class="mission-text" id="missionText"></span>
+  </div>
+
+  <div class="scene-wrap">
+    <svg class="scene" id="scene" viewBox="0 0 1000 280" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="skyNight" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#0a0e2a"/>
+          <stop offset="100%" stop-color="#1a2150"/>
+        </linearGradient>
+        <linearGradient id="skyDesert" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#3a1a08"/>
+          <stop offset="100%" stop-color="#a0461a"/>
+        </linearGradient>
+        <linearGradient id="skyForest" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#0a1a14"/>
+          <stop offset="100%" stop-color="#1a3a28"/>
+        </linearGradient>
+        <linearGradient id="skyCastle" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#1a0a2a"/>
+          <stop offset="100%" stop-color="#4a1e5a"/>
+        </linearGradient>
+        <linearGradient id="groundNight" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#5a3a22"/>
+          <stop offset="100%" stop-color="#2a1808"/>
+        </linearGradient>
+        <linearGradient id="groundDesert" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#d4a05a"/>
+          <stop offset="100%" stop-color="#7a5028"/>
+        </linearGradient>
+        <linearGradient id="groundForest" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#3a5a28"/>
+          <stop offset="100%" stop-color="#1a2810"/>
+        </linearGradient>
+        <linearGradient id="groundCastle" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#6a4a7a"/>
+          <stop offset="100%" stop-color="#2a1a3a"/>
+        </linearGradient>
+      </defs>
+
+      <rect id="sky" width="1000" height="280" fill="url(#skyNight)"/>
+      <g id="sceneExtras"></g>
+      <rect id="ground" x="0" y="220" width="1000" height="60" fill="url(#groundNight)"/>
+      <rect id="groundTop" x="0" y="215" width="1000" height="5" fill="#7a4a28"/>
+      <g id="gaps"></g>
+      <g id="destination"></g>
+      <g id="robot" transform="translate(40, 165)">
+        <rect x="0" y="0" width="40" height="30" fill="#a8a29e" stroke="#5a554f" stroke-width="1.5"/>
+        <rect x="3" y="3" width="34" height="24" fill="#0d1a14"/>
+        <rect class="eye eye-l" x="9" y="9" width="6" height="5" fill="#4ade80"/>
+        <rect class="eye eye-r" x="25" y="9" width="6" height="5" fill="#4ade80"/>
+        <rect class="mouth" x="11" y="19" width="18" height="3" fill="#4ade80"/>
+        <circle cx="34" cy="24" r="1.5" fill="#4ade80"/>
+        <rect x="15" y="30" width="10" height="6" fill="#a8a29e" stroke="#5a554f" stroke-width="1"/>
+        <rect x="-2" y="36" width="44" height="10" fill="#c8c2b8" stroke="#5a554f" stroke-width="1"/>
+        <rect x="2" y="38" width="6" height="4" fill="#7a756f"/>
+        <rect x="12" y="38" width="6" height="4" fill="#7a756f"/>
+        <rect x="22" y="38" width="6" height="4" fill="#7a756f"/>
+        <rect x="32" y="38" width="6" height="4" fill="#7a756f"/>
+        <rect x="6" y="46" width="6" height="8" fill="#a8a29e" stroke="#5a554f" stroke-width="1"/>
+        <rect x="28" y="46" width="6" height="8" fill="#a8a29e" stroke="#5a554f" stroke-width="1"/>
+      </g>
+    </svg>
+  </div>
+
+  <div class="toolbar">
+    <div class="kbd-hint">
+      <kbd>A</kbd><kbd>B</kbd><kbd>C</kbd><kbd>D</kbd> answer · <kbd>Enter</kbd> continue
+    </div>
+    <button class="sound-toggle" id="soundToggle" onclick="toggleSound()">♪ SOUND ON</button>
+  </div>
+
+  <div class="quiz" id="quiz"></div>
+  <div class="reveal-panel" id="revealPanel"></div>
+
+  <div class="query-section" id="querySection">
+    <div class="section-label">▸ CHOOSE A MISSION</div>
+    <div class="query-grid" id="queryGrid"></div>
+  </div>
+
+  <div class="final" id="finalCard"></div>
+
+</div>
+
+<script>
+const MAX_LIVES = 3;
+const STAGES_PER_QUERY = 2;
+
+const queries = [
+  {
+    label: "Tool calling",
+    mission: "Help Agent-8 cross the canyon to reach Princess Agent.",
+    scene: "night",
+    stages: [
+      {
+        name: "When to use a tool",
+        q: "A user asks Agent-8: 'Who won the most recent Super Bowl?' What should it do?",
+        opts: [
+          "Answer from memory — sports results are well-known facts",
+          "Use a web_search tool — its training data has a cutoff and 'most recent' might be after that",
+          "Refuse to answer — predictions are unreliable",
+          "Ask the user to tell it the year first"
+        ],
+        ans: 1,
+        hints: [
+          "The model was trained at some point in the past. What happens to events after that point?",
+          "'Most recent' is relative — what was recent during training might not be recent now.",
+          "When you can't be sure your memory is current, what's the safer move?"
+        ],
+        explain: "Even for well-known events, 'most recent' depends on when the model was trained. If the Super Bowl happened after the training cutoff, the model would confidently give a stale answer. A tool call lets it check what's actually current."
+      },
+      {
+        name: "Picking the right tool",
+        q: "A user asks Agent-8: 'What's the standard deviation of these numbers: 14, 22, 18, 31, 27, 19, 25, 16, 29, 21?' Which tool should it use?",
+        opts: [
+          "web_search — search for a statistics calculator online",
+          "calculator — it's a math problem",
+          "run_python — multi-step stats is most reliable in code",
+          "No tool — the LLM can do it from memory"
+        ],
+        ans: 2,
+        hints: [
+          "Standard deviation isn't a single operation — it needs the mean, then squared differences, then an average, then a square root.",
+          "A basic calculator handles one operation at a time. LLMs are unreliable at multi-step arithmetic.",
+          "When math gets complex, code execution is the safest bet."
+        ],
+        explain: "Standard deviation is multi-step math: mean, squared differences, average, square root. A basic calculator is too simple, and LLMs make arithmetic mistakes. run_python executes real code, so the result is reliable."
+      }
+    ]
+  },
+  {
+    label: "The agent loop",
+    mission: "Agent-8 must journey across the dunes to reach Princess Agent.",
+    scene: "desert",
+    stages: [
+      {
+        name: "Reading the result",
+        q: "Agent-8 calls a weather tool and gets back: { temp: 72, condition: 'sunny' }. What does it do next?",
+        opts: [
+          "Send the raw JSON to the user",
+          "Read the result, then write a natural-language answer using it",
+          "Call the same tool again to double-check",
+          "Stop — the tool already answered the user"
+        ],
+        ans: 1,
+        hints: [
+          "Users want a normal answer, not raw data.",
+          "The agent's job isn't done when the tool returns — it still has to write the reply.",
+          "Tool result goes back to the LLM, which forms the final response."
+        ],
+        explain: "Tool results go back into the LLM, which uses them to write a natural answer. The agent loop is: think → act (tool) → read result → think again → respond."
+      },
+      {
+        name: "Many steps",
+        q: "Some tasks need many tool calls in a row (search, then calculate, then send an email). What lets an agent do this?",
+        opts: [
+          "A bigger LLM with more parameters",
+          "A loop that lets the agent keep acting until the task is done",
+          "More training data",
+          "Pre-written scripts for every possible task"
+        ],
+        ans: 1,
+        hints: [
+          "What's the structural difference between a chatbot (one reply) and an agent (many actions)?",
+          "The word 'agent' implies repeated action toward a goal.",
+          "Hint is in the mission name."
+        ],
+        explain: "Agents loop: think → act → observe → think again. This loop is what lets them chain multiple tool calls together to complete multi-step tasks."
+      }
+    ]
+  },
+  {
+    isBoss: true,
+    label: "BOSS — Put it all together",
+    mission: "The final crossing. Choose wisely — Princess Agent is waiting.",
+    scene: "castle",
+    stages: [
+      {
+        name: "Memory",
+        q: "Why can memory improve an AI agent's performance over time?",
+        opts: [
+          "It increases internet speed",
+          "It permanently retrains the model after every message",
+          "It helps the agent retain useful context, preferences, and past actions",
+          "It guarantees correct answers"
+        ],
+        ans: 2,
+        hints: [
+          "Memory doesn't change the model itself — what does it change?",
+          "Think about what an agent gains when it can recall past conversations.",
+          "It's about context and personalization, not retraining."
+        ],
+        explain: "Memory lets an agent remember context, user preferences, and past actions across conversations. The model itself doesn't change — the agent just carries useful information forward."
+      },
+      {
+        name: "Why the loop",
+        q: "Why do AI agents often operate in a loop?",
+        opts: [
+          "To repeatedly retrain the model during conversations",
+          "To keep generating random actions until something works",
+          "To observe results, decide what to do next, and continue until the task is complete",
+          "To avoid using tools too frequently"
+        ],
+        ans: 2,
+        hints: [
+          "Real tasks rarely finish in one step. What does the agent need to do after each action?",
+          "Think about how you'd solve a multi-step problem yourself.",
+          "It's act, then check, then decide what's next."
+        ],
+        explain: "Agents loop because real tasks take multiple steps. After each action, the agent observes the result, decides what to do next, and continues until the goal is reached."
+      }
+    ]
+  }
+];
+
+let currentQuery = -1, currentStage = 0, score = 0, total = 0;
+let attemptCount = 0, eliminated = new Set();
+let streak = 0, bestStreak = 0;
+let completedQueries = new Set();
+let isAnimating = false;
+let lives = MAX_LIVES;
+let soundOn = true;
+let audioCtx = null;
+
+const ROBOT_START_X = 40;
+const PRINCESS_X = 870;
+const TOTAL_DISTANCE = PRINCESS_X - ROBOT_START_X;
+const GAP_WIDTH = 90;
+
+function ensureAudio() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    catch(e) { audioCtx = null; }
+  }
+}
+
+function beep(freq, duration, type, volume) {
+  if (!soundOn) return;
+  ensureAudio();
+  if (!audioCtx) return;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type = type || 'square';
+  o.frequency.setValueAtTime(freq, audioCtx.currentTime);
+  g.gain.setValueAtTime(volume || 0.1, audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+  o.connect(g); g.connect(audioCtx.destination);
+  o.start();
+  o.stop(audioCtx.currentTime + duration);
+}
+
+function soundCorrect() {
+  beep(523, 0.08, 'square', 0.08);
+  setTimeout(() => beep(659, 0.08, 'square', 0.08), 80);
+  setTimeout(() => beep(784, 0.15, 'square', 0.08), 160);
+}
+function soundWrong() {
+  beep(220, 0.15, 'sawtooth', 0.06);
+  setTimeout(() => beep(180, 0.2, 'sawtooth', 0.06), 100);
+}
+function soundPlank() {
+  beep(140, 0.05, 'square', 0.12);
+  setTimeout(() => beep(100, 0.1, 'square', 0.1), 50);
+}
+function soundStep() {
+  beep(180, 0.03, 'square', 0.04);
+}
+function soundFall() {
+  ensureAudio();
+  if (!soundOn || !audioCtx) return;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type = 'sawtooth';
+  o.frequency.setValueAtTime(400, audioCtx.currentTime);
+  o.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.6);
+  g.gain.setValueAtTime(0.1, audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.6);
+  o.connect(g); g.connect(audioCtx.destination);
+  o.start(); o.stop(audioCtx.currentTime + 0.6);
+}
+function soundVictory() {
+  if (!soundOn) return;
+  const notes = [523, 659, 784, 1047];
+  notes.forEach((f, i) => setTimeout(() => beep(f, 0.18, 'square', 0.1), i * 120));
+}
+function soundBossVictory() {
+  if (!soundOn) return;
+  const notes = [523, 659, 784, 1047, 1319, 1047, 1319];
+  notes.forEach((f, i) => setTimeout(() => beep(f, 0.22, 'square', 0.1), i * 130));
+}
+
+let saxActiveNodes = [];
+
+function playSaxNote(freq, startOffset, duration, volume) {
+  if (!soundOn || !audioCtx) return;
+  const startT = audioCtx.currentTime + startOffset;
+  const endT = startT + duration;
+
+  const osc = audioCtx.createOscillator();
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(freq, startT);
+
+  const vibrato = audioCtx.createOscillator();
+  vibrato.type = 'sine';
+  vibrato.frequency.setValueAtTime(5.2, startT);
+  const vibratoGain = audioCtx.createGain();
+  vibratoGain.gain.setValueAtTime(0, startT);
+  vibratoGain.gain.linearRampToValueAtTime(freq * 0.012, startT + 0.18);
+  vibrato.connect(vibratoGain);
+  vibratoGain.connect(osc.frequency);
+
+  const filter = audioCtx.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.setValueAtTime(2200, startT);
+  filter.Q.setValueAtTime(2, startT);
+
+  const env = audioCtx.createGain();
+  const v = volume || 0.08;
+  env.gain.setValueAtTime(0, startT);
+  env.gain.linearRampToValueAtTime(v, startT + 0.08);
+  env.gain.linearRampToValueAtTime(v * 0.85, startT + duration * 0.7);
+  env.gain.exponentialRampToValueAtTime(0.0001, endT);
+
+  osc.connect(filter);
+  filter.connect(env);
+  env.connect(audioCtx.destination);
+
+  osc.start(startT);
+  vibrato.start(startT);
+  osc.stop(endT + 0.05);
+  vibrato.stop(endT + 0.05);
+
+  saxActiveNodes.push(osc, vibrato);
+}
+
+function playChordPad(freqs, startOffset, duration, volume) {
+  if (!soundOn || !audioCtx) return;
+  const startT = audioCtx.currentTime + startOffset;
+  const endT = startT + duration;
+  const v = volume || 0.025;
+
+  freqs.forEach((freq, i) => {
+    const osc = audioCtx.createOscillator();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(freq, startT);
+
+    const env = audioCtx.createGain();
+    env.gain.setValueAtTime(0, startT);
+    env.gain.linearRampToValueAtTime(v, startT + 0.3);
+    env.gain.linearRampToValueAtTime(v * 0.7, startT + duration * 0.8);
+    env.gain.exponentialRampToValueAtTime(0.0001, endT);
+
+    osc.connect(env);
+    env.connect(audioCtx.destination);
+    osc.start(startT);
+    osc.stop(endT + 0.05);
+    saxActiveNodes.push(osc);
+  });
+}
+
+function playKennyGSerenade() {
+  if (!soundOn) return;
+  ensureAudio();
+  if (!audioCtx) return;
+  stopKennyGSerenade();
+
+  const F4 = 349.23, A4 = 440.00, Bb4 = 466.16, C5 = 523.25, D5 = 587.33, F5 = 698.46, A5 = 880.00;
+  const F3 = 174.61, A3 = 220.00, C4 = 261.63, D4 = 293.66, Bb3 = 233.08;
+
+  playChordPad([F3, A3, C4],   0.0, 1.6, 0.022);
+  playChordPad([Bb3, D4, F4],  1.6, 1.4, 0.022);
+  playChordPad([C4, F4, A4],   3.0, 2.0, 0.022);
+
+  playSaxNote(F4,   0.05, 0.45, 0.075);
+  playSaxNote(A4,   0.55, 0.40, 0.08);
+  playSaxNote(C5,   0.97, 0.55, 0.085);
+
+  playSaxNote(Bb4,  1.65, 0.40, 0.08);
+  playSaxNote(D5,   2.08, 0.35, 0.085);
+  playSaxNote(F5,   2.46, 0.45, 0.09);
+
+  playSaxNote(C5,   3.05, 0.40, 0.085);
+  playSaxNote(F5,   3.50, 0.55, 0.095);
+  playSaxNote(A5,   4.10, 0.85, 0.10);
+}
+
+function stopKennyGSerenade() {
+  saxActiveNodes.forEach(n => { try { n.stop(); } catch(e){} });
+  saxActiveNodes = [];
+}
+
+function toggleSound() {
+  soundOn = !soundOn;
+  document.getElementById('soundToggle').textContent = soundOn ? '♪ SOUND ON' : '♪ SOUND OFF';
+  if (!soundOn) stopKennyGSerenade();
+  else beep(880, 0.08, 'square', 0.08);
+}
+
+function updateScore() {
+  document.getElementById('scoreVal').textContent = score + '/' + total;
+}
+function updateStreak() {
+  const el = document.getElementById('streak');
+  const num = document.getElementById('streakNum');
+  if (streak >= 2) { num.textContent = streak; el.classList.add('show'); }
+  else { el.classList.remove('show'); }
+}
+function updateLives() {
+  for (let i = 0; i < MAX_LIVES; i++) {
+    const el = document.getElementById('life' + i);
+    if (i < lives) el.classList.remove('lost');
+    else el.classList.add('lost');
+  }
+}
+
+function buildQueryGrid() {
+  const grid = document.getElementById('queryGrid');
+  grid.innerHTML = '';
+  const bossUnlocked = completedQueries.has(0) && completedQueries.has(1);
+  queries.forEach((q, i) => {
+    const card = document.createElement('button');
+    let cls = 'qcard';
+    if (q.isBoss) cls += ' boss';
+    if (completedQueries.has(i)) cls += ' completed';
+    if (q.isBoss && !bossUnlocked) cls += ' locked';
+    card.className = cls;
+    card.id = 'qcard' + i;
+    const label = q.isBoss ? '★ BOSS LEVEL' : 'MISSION ' + (i + 1);
+    const lockNote = (q.isBoss && !bossUnlocked) ? ' <span style="color:var(--text-soft); font-size:11px;">(complete missions 1 & 2 first)</span>' : '';
+    card.innerHTML = '<div class="qcard-label">' + label + '</div><div class="qcard-text">' + q.label + lockNote + '</div>';
+    card.onclick = () => { if (!card.classList.contains('locked')) startQuery(i); };
+    grid.appendChild(card);
+  });
+}
+
+function setSceneTheme(sceneName) {
+  document.body.classList.remove('scene-desert', 'scene-forest', 'scene-castle');
+  if (sceneName === 'desert') document.body.classList.add('scene-desert');
+  else if (sceneName === 'forest') document.body.classList.add('scene-forest');
+  else if (sceneName === 'castle') document.body.classList.add('scene-castle');
+
+  const sky = document.getElementById('sky');
+  const ground = document.getElementById('ground');
+  const groundTop = document.getElementById('groundTop');
+  const extras = document.getElementById('sceneExtras');
+  extras.innerHTML = '';
+
+  if (sceneName === 'desert') {
+    sky.setAttribute('fill', 'url(#skyDesert)');
+    ground.setAttribute('fill', 'url(#groundDesert)');
+    groundTop.setAttribute('fill', '#e8b878');
+    extras.innerHTML = `
+      <circle cx="800" cy="80" r="35" fill="#ffd060" opacity="0.85"/>
+      <circle cx="800" cy="80" r="50" fill="#ffa040" opacity="0.2"/>
+      <path d="M 0 215 L 100 195 L 200 215 Z" fill="#8a5028" opacity="0.5"/>
+      <path d="M 300 215 L 450 180 L 600 215 Z" fill="#8a5028" opacity="0.4"/>
+      <path d="M 650 215 L 750 200 L 850 215 Z" fill="#8a5028" opacity="0.45"/>
+      <ellipse cx="200" cy="218" rx="40" ry="3" fill="#6a3818" opacity="0.5"/>
+      <ellipse cx="500" cy="218" rx="60" ry="3" fill="#6a3818" opacity="0.5"/>
+    `;
+  } else if (sceneName === 'castle') {
+    sky.setAttribute('fill', 'url(#skyCastle)');
+    ground.setAttribute('fill', 'url(#groundCastle)');
+    groundTop.setAttribute('fill', '#8a6a9a');
+    let starHtml = '';
+    for (let i = 0; i < 35; i++) {
+      const x = Math.random() * 1000;
+      const y = Math.random() * 180;
+      const r = Math.random() * 1 + 0.5;
+      starHtml += `<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" opacity="${0.6 + Math.random() * 0.4}"/>`;
+    }
+    extras.innerHTML = starHtml + `
+      <circle cx="150" cy="60" r="22" fill="#ffe0a0" opacity="0.95"/>
+      <circle cx="142" cy="55" r="4" fill="#d8b890" opacity="0.5"/>
+      <circle cx="158" cy="65" r="3" fill="#d8b890" opacity="0.5"/>
+      <path d="M 300 215 L 320 175 L 340 215 Z" fill="#3a1a4a" opacity="0.6"/>
+      <path d="M 550 215 L 580 170 L 610 215 Z" fill="#3a1a4a" opacity="0.6"/>
+    `;
+  } else {
+    sky.setAttribute('fill', 'url(#skyNight)');
+    ground.setAttribute('fill', 'url(#groundNight)');
+    groundTop.setAttribute('fill', '#7a4a28');
+    let starHtml = '';
+    for (let i = 0; i < 40; i++) {
+      const x = Math.random() * 1000;
+      const y = Math.random() * 180;
+      const r = Math.random() * 1.2 + 0.4;
+      starHtml += `<circle cx="${x}" cy="${y}" r="${r}" fill="#fff" opacity="${0.6 + Math.random() * 0.4}"/>`;
+    }
+    extras.innerHTML = starHtml;
+  }
+}
+
+function setupDestination() {
+  const dest = document.getElementById('destination');
+  dest.innerHTML = `
+    <g id="princess" transform="translate(870, 160)">
+      <g id="princessBody">
+        <rect x="0" y="0" width="40" height="30" fill="#e8a0c8" stroke="#a85090" stroke-width="1.5"/>
+        <rect x="3" y="3" width="34" height="24" fill="#2a0820"/>
+        <rect class="p-eye p-eye-l" x="9" y="9" width="6" height="5" fill="#ff6fb5"/>
+        <rect class="p-eye p-eye-r" x="25" y="9" width="6" height="5" fill="#ff6fb5"/>
+        <path class="p-mouth" d="M 12 19 Q 20 24 28 19" fill="none" stroke="#ff6fb5" stroke-width="2"/>
+        <circle cx="34" cy="24" r="1.5" fill="#ff6fb5"/>
+        <path d="M 5 -2 L 8 -8 L 11 -3 L 14 -10 L 17 -2 L 20 -10 L 23 -2 L 26 -10 L 29 -3 L 32 -8 L 35 -2 Z" fill="#ffd060" stroke="#c89020" stroke-width="1"/>
+        <circle cx="14" cy="-7" r="1.5" fill="#ff6fb5"/>
+        <circle cx="20" cy="-8" r="1.8" fill="#ff6fb5"/>
+        <circle cx="26" cy="-7" r="1.5" fill="#ff6fb5"/>
+        <rect x="15" y="30" width="10" height="6" fill="#e8a0c8" stroke="#a85090" stroke-width="1"/>
+        <path d="M -8 36 L 48 36 L 56 60 L -16 60 Z" fill="#ff6fb5" stroke="#a85090" stroke-width="1.5"/>
+        <path d="M -4 42 Q 20 48 44 42" fill="none" stroke="#ffb0d8" stroke-width="1"/>
+        <path d="M -8 50 Q 20 56 48 50" fill="none" stroke="#ffb0d8" stroke-width="1"/>
+      </g>
+    </g>
+    <g id="hearts"></g>
+  `;
+}
+
+function setupGaps(numGaps) {
+  const gapsEl = document.getElementById('gaps');
+  gapsEl.innerHTML = '';
+
+  const spacing = TOTAL_DISTANCE / (numGaps + 1);
+  for (let i = 0; i < numGaps; i++) {
+    const x = ROBOT_START_X + spacing * (i + 1) - GAP_WIDTH / 2 + 25;
+
+    const gapBlack = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    gapBlack.setAttribute('x', x);
+    gapBlack.setAttribute('y', 220);
+    gapBlack.setAttribute('width', GAP_WIDTH);
+    gapBlack.setAttribute('height', 60);
+    gapBlack.setAttribute('fill', '#000');
+    gapBlack.setAttribute('id', 'gap' + i);
+    gapsEl.appendChild(gapBlack);
+
+    const gapTop = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    gapTop.setAttribute('x', x);
+    gapTop.setAttribute('y', 215);
+    gapTop.setAttribute('width', GAP_WIDTH);
+    gapTop.setAttribute('height', 5);
+    gapTop.setAttribute('fill', '#000');
+    gapsEl.appendChild(gapTop);
+
+    const plank = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    plank.setAttribute('id', 'plank' + i);
+    plank.setAttribute('opacity', '0');
+    plank.setAttribute('transform', 'translate(' + x + ', 180)');
+
+    const plankRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    plankRect.setAttribute('x', 0);
+    plankRect.setAttribute('y', 35);
+    plankRect.setAttribute('width', GAP_WIDTH);
+    plankRect.setAttribute('height', 8);
+    plankRect.setAttribute('fill', '#c89060');
+    plankRect.setAttribute('stroke', '#8a5a30');
+    plankRect.setAttribute('stroke-width', '1');
+    plank.appendChild(plankRect);
+
+    for (let j = 0; j < 5; j++) {
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', (j + 1) * (GAP_WIDTH / 6));
+      line.setAttribute('y1', 35);
+      line.setAttribute('x2', (j + 1) * (GAP_WIDTH / 6));
+      line.setAttribute('y2', 43);
+      line.setAttribute('stroke', '#8a5a30');
+      line.setAttribute('stroke-width', '0.5');
+      plank.appendChild(line);
+    }
+    gapsEl.appendChild(plank);
+  }
+}
+
+function getRobotPositionForStage(stageIdx, numGaps) {
+  const spacing = TOTAL_DISTANCE / (numGaps + 1);
+  if (stageIdx >= numGaps) return PRINCESS_X - 55;
+  return ROBOT_START_X + spacing * (stageIdx + 1) - GAP_WIDTH / 2 - 10;
+}
+
+function setRobotExpression(mood) {
+  const eyeL = document.querySelector('#robot .eye-l');
+  const eyeR = document.querySelector('#robot .eye-r');
+  const mouth = document.querySelector('#robot .mouth');
+  if (!eyeL) return;
+
+  if (mood === 'sad') {
+    eyeL.setAttribute('fill', '#ef4444');
+    eyeR.setAttribute('fill', '#ef4444');
+    mouth.setAttribute('fill', '#ef4444');
+    mouth.setAttribute('y', '22');
+    mouth.setAttribute('height', '2');
+  } else if (mood === 'happy') {
+    eyeL.setAttribute('fill', '#ff6fb5');
+    eyeR.setAttribute('fill', '#ff6fb5');
+    mouth.setAttribute('fill', '#ff6fb5');
+    mouth.setAttribute('y', '19');
+    mouth.setAttribute('height', '3');
+  } else {
+    eyeL.setAttribute('fill', '#4ade80');
+    eyeR.setAttribute('fill', '#4ade80');
+    mouth.setAttribute('fill', '#4ade80');
+    mouth.setAttribute('y', '19');
+    mouth.setAttribute('height', '3');
+  }
+}
+
+function moveRobotTo(targetX, duration, callback) {
+  const robot = document.getElementById('robot');
+  const currentTransform = robot.getAttribute('transform');
+  const match = currentTransform.match(/translate\(([^,]+),\s*([^)]+)\)/);
+  const startX = parseFloat(match[1]);
+  const y = 165;
+
+  const startTime = performance.now();
+  isAnimating = true;
+  let lastStepTime = 0;
+
+  function step(now) {
+    const elapsed = now - startTime;
+    const t = Math.min(elapsed / duration, 1);
+    const eased = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    const x = startX + (targetX - startX) * eased;
+    const bob = Math.sin(elapsed / 80) * 1.5;
+    robot.setAttribute('transform', 'translate(' + x + ', ' + (y + bob) + ')');
+
+    if (elapsed - lastStepTime > 200 && t < 0.95) {
+      soundStep();
+      lastStepTime = elapsed;
+    }
+
+    if (t < 1) requestAnimationFrame(step);
+    else {
+      robot.setAttribute('transform', 'translate(' + targetX + ', 165)');
+      isAnimating = false;
+      if (callback) callback();
+    }
+  }
+  requestAnimationFrame(step);
+}
+
+function dropPlank(idx, callback) {
+  soundPlank();
+  const plank = document.getElementById('plank' + idx);
+  plank.style.transition = 'transform 0.6s cubic-bezier(0.5, 0, 0.5, 1.2), opacity 0.3s ease';
+  plank.setAttribute('opacity', '1');
+
+  setTimeout(() => {
+    const gapMatch = document.getElementById('gap' + idx).getAttribute('x');
+    plank.setAttribute('transform', 'translate(' + gapMatch + ', 180)');
+    setTimeout(() => soundPlank(), 400);
+  }, 20);
+
+  setTimeout(() => {
+    if (callback) callback();
+  }, 700);
+}
+
+function robotFalls(callback) {
+  soundFall();
+  setRobotExpression('sad');
+  const robot = document.getElementById('robot');
+  const transform = robot.getAttribute('transform');
+  const match = transform.match(/translate\(([^,]+),\s*([^)]+)\)/);
+  const x = parseFloat(match[1]);
+
+  const startTime = performance.now();
+  isAnimating = true;
+
+  function fall(now) {
+    const elapsed = now - startTime;
+    const t = Math.min(elapsed / 800, 1);
+    const yOffset = t * 120;
+    const rotate = t * 180;
+    robot.setAttribute('transform', `translate(${x}, ${165 + yOffset}) rotate(${rotate}, 20, 25)`);
+    robot.style.opacity = 1 - t * 0.7;
+    if (t < 1) requestAnimationFrame(fall);
+    else {
+      isAnimating = false;
+      if (callback) callback();
+    }
+  }
+  requestAnimationFrame(fall);
+}
+
+function startQuery(qi) {
+  stopRomanticDance();
+  document.querySelectorAll('.qcard').forEach((c, i) => {
+    c.classList.toggle('active', i === qi);
+  });
+  currentQuery = qi;
+  currentStage = 0;
+  attemptCount = 0;
+  eliminated = new Set();
+  lives = MAX_LIVES;
+  updateLives();
+
+  const q = queries[qi];
+  document.getElementById('quiz').classList.remove('show');
+  document.getElementById('revealPanel').classList.remove('show');
+  document.getElementById('finalCard').classList.remove('show');
+  document.getElementById('querySection').style.display = 'none';
+
+  document.getElementById('mission').classList.add('show');
+  document.getElementById('mission').classList.toggle('boss', !!q.isBoss);
+  document.getElementById('missionLabel').textContent = q.isBoss ? '★ BOSS' : '▸ MISSION';
+  document.getElementById('missionText').textContent = q.mission;
+
+  setSceneTheme(q.scene);
+  setupDestination();
+  setupGaps(q.stages.length);
+
+  const robot = document.getElementById('robot');
+  robot.style.opacity = 1;
+  robot.setAttribute('transform', 'translate(' + ROBOT_START_X + ', 165)');
+  setRobotExpression('normal');
+
+  ensureAudio();
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+
+  setTimeout(() => {
+    moveRobotTo(getRobotPositionForStage(0, q.stages.length), 1200, () => {
+      showQuiz(0);
+    });
+  }, 400);
+}
+
+function showQuiz(si) {
+  currentStage = si;
+  attemptCount = 0;
+  eliminated = new Set();
+  const q = queries[currentQuery];
+  const stage = q.stages[si];
+  const letters = ['A', 'B', 'C', 'D'];
+
+  const optsHtml = stage.opts.map((o, i) =>
+    `<button class="opt" id="opt${i}" onclick="answer(${i})">
+      <span class="opt-letter">${letters[i]}</span><span>${o}</span>
+    </button>`
+  ).join('');
+
+  
+  const badgeLabel = q.isBoss ? `★ BOSS ${si + 1}/${q.stages.length}` : `▸ GAP ${si + 1}/${q.stages.length}`;
+
+  document.getElementById('quiz').className = 'quiz show' + (q.isBoss ? ' boss' : '');
+  document.getElementById('quiz').innerHTML = `
+    <div class="quiz-header">
+      <span class="quiz-badge">${badgeLabel}</span>
+      <span class="quiz-stage">${stage.name.toUpperCase()}</span>
+    </div>
+    <div class="quiz-stage-name">▸ ${stage.name}</div>
+    <div class="quiz-q">${stage.q}</div>
+    <div class="opts">${optsHtml}</div>
+    <div class="feedback" id="feedback"></div>`;
+  document.getElementById('revealPanel').classList.remove('show');
+  document.getElementById('quiz').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function answer(chosen) {
+  if (isAnimating) return;
+  if (eliminated.has(chosen)) return;
+  const q = queries[currentQuery];
+  const stage = q.stages[currentStage];
+  const fb = document.getElementById('feedback');
+
+  if (chosen === stage.ans) {
+    soundCorrect();
+    total++;
+    if (attemptCount === 0) {
+      score++;
+      streak++;
+      if (streak > bestStreak) bestStreak = streak;
+    } else {
+      streak = 0;
+    }
+    updateScore();
+    updateStreak();
+
+    document.querySelectorAll('.opt').forEach(b => b.disabled = true);
+    document.getElementById('opt' + chosen).classList.add('correct');
+
+    setTimeout(() => {
+      dropPlank(currentStage, () => {
+        crossAndAdvance(stage);
+      });
+    }, 400);
+  } else {
+    soundWrong();
+    streak = 0;
+    updateStreak();
+    lives--;
+    updateLives();
+    eliminated.add(chosen);
+    const btn = document.getElementById('opt' + chosen);
+    btn.classList.add('eliminated');
+    btn.disabled = true;
+    attemptCount++;
+
+    if (lives <= 0) {
+      fb.className = 'feedback show danger';
+      fb.innerHTML = '<strong>The bridge collapses!</strong> Agent-8 fell into the canyon...';
+      document.querySelectorAll('.opt').forEach(b => b.disabled = true);
+      setTimeout(() => robotFalls(() => {
+        setTimeout(() => showFinal(true), 500);
+      }), 800);
+    } else {
+      const hintIdx = Math.min(attemptCount - 1, stage.hints.length - 1);
+      const livesLeft = lives === 1 ? '1 life left' : lives + ' lives left';
+      fb.className = 'feedback show hint';
+      fb.innerHTML = `<strong>Wrong — ${livesLeft}. Hint:</strong> ${stage.hints[hintIdx]}`;
+    }
+  }
+}
+
+function crossAndAdvance(stage) {
+  const q = queries[currentQuery];
+  document.getElementById('quiz').classList.remove('show');
+  const next = currentStage + 1;
+
+  if (next < q.stages.length) {
+    moveRobotTo(getRobotPositionForStage(next, q.stages.length), 1400, () => {
+      showReveal(stage, false);
+    });
+  } else {
+    const meetX = q.isBoss ? PRINCESS_X - 75 : PRINCESS_X - 55;
+    moveRobotTo(meetX, 1800, () => {
+      setRobotExpression('happy');
+      if (q.isBoss) {
+        startRomanticDance(stage);
+      } else {
+        soundVictory();
+        showReveal(stage, true);
+      }
+    });
+  }
+}
+
+let danceRafId = null;
+let heartSpawnId = null;
+
+function startRomanticDance(stage) {
+  playKennyGSerenade();
+  const robot = document.getElementById('robot');
+  const princess = document.getElementById('princess');
+  if (!robot || !princess) { showReveal(stage, true); return; }
+
+  const robotBaseX = PRINCESS_X - 75;
+  const robotBaseY = 165;
+  const princessBaseX = 870;
+  const princessBaseY = 160;
+  const startTime = performance.now();
+
+  function tick(now) {
+    const t = (now - startTime) / 1000;
+    const sway = Math.sin(t * 2.2);
+    const bob = Math.abs(Math.sin(t * 4.4)) * 3;
+    const spin = Math.sin(t * 1.1) * 8;
+
+    const rx = robotBaseX + sway * 4;
+    const ry = robotBaseY - bob;
+    const px = princessBaseX - sway * 4;
+    const py = princessBaseY - bob;
+
+    robot.setAttribute('transform', `translate(${rx}, ${ry}) rotate(${spin}, 20, 25)`);
+    princess.setAttribute('transform', `translate(${px}, ${py}) rotate(${-spin}, 20, 25)`);
+
+    danceRafId = requestAnimationFrame(tick);
+  }
+  danceRafId = requestAnimationFrame(tick);
+
+  spawnHeart();
+  heartSpawnId = setInterval(spawnHeart, 600);
+
+  setTimeout(() => showReveal(stage, true), 5000);
+}
+
+function stopRomanticDance() {
+  if (danceRafId) { cancelAnimationFrame(danceRafId); danceRafId = null; }
+  if (heartSpawnId) { clearInterval(heartSpawnId); heartSpawnId = null; }
+  stopKennyGSerenade();
+}
+
+function spawnHeart() {
+  const heartsLayer = document.getElementById('hearts');
+  if (!heartsLayer) return;
+  const midX = (PRINCESS_X - 75) + 20 + ((870 + 20) - (PRINCESS_X - 75 + 20)) / 2 + (Math.random() * 30 - 15);
+  const startY = 155 + Math.random() * 10;
+  const heart = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  const size = 0.6 + Math.random() * 0.5;
+  heart.setAttribute('d', 'M 0 3 C -4 -2, -8 0, -4 5 C -2 7, 0 9, 0 9 C 0 9, 2 7, 4 5 C 8 0, 4 -2, 0 3 Z');
+  heart.setAttribute('fill', '#ff6fb5');
+  heart.setAttribute('stroke', '#c84080');
+  heart.setAttribute('stroke-width', '0.5');
+  heart.setAttribute('transform', `translate(${midX}, ${startY}) scale(${size})`);
+  heart.setAttribute('opacity', '0.95');
+  heartsLayer.appendChild(heart);
+
+  const driftX = (Math.random() - 0.5) * 30;
+  const start = performance.now();
+  const duration = 1800;
+
+  function animate(now) {
+    const t = Math.min((now - start) / duration, 1);
+    const y = startY - t * 70;
+    const x = midX + driftX * t;
+    const opacity = 1 - t;
+    const scale = size * (1 + t * 0.3);
+    heart.setAttribute('transform', `translate(${x}, ${y}) scale(${scale})`);
+    heart.setAttribute('opacity', opacity.toFixed(2));
+    if (t < 1) requestAnimationFrame(animate);
+    else if (heart.parentNode) heart.parentNode.removeChild(heart);
+  }
+  requestAnimationFrame(animate);
+}
+
+function showReveal(stage, isFinal) {
+  const q = queries[currentQuery];
+  const panel = document.getElementById('revealPanel');
+  panel.className = 'reveal-panel show' + (q.isBoss ? ' boss' : '');
+  const btnClass = q.isBoss ? 'btn-pink' : 'btn-primary';
+  const btnLabel = isFinal
+    ? (q.isBoss ? '▸ Reunite with Princess Agent' : '▸ See your result')
+    : '▸ Next gap';
+  panel.innerHTML = `
+    <div class="reveal-label">▸ ${stage.name.toUpperCase()}</div>
+    <div class="reveal-text">${stage.explain}</div>
+    <div class="actions">
+      <button class="btn ${btnClass}" id="continueBtn" onclick="nextStage(${isFinal})">${btnLabel}</button>
+    </div>`;
+  panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function nextStage(isFinal) {
+  document.getElementById('revealPanel').classList.remove('show');
+  if (isFinal) {
+    setTimeout(() => showFinal(false), 200);
+  } else {
+    const next = currentStage + 1;
+    showQuiz(next);
+  }
+}
+
+function showFinal(failed) {
+  const q = queries[currentQuery];
+  const card = document.getElementById('finalCard');
+
+  if (failed) {
+    card.className = 'final show fail';
+    card.innerHTML = `
+      <div class="final-banner">▸ GAME OVER</div>
+      <div class="final-num">${score}/${total}</div>
+      <div class="final-detail">AGENT-8 FELL INTO THE CANYON</div>
+      <div class="final-msg">Princess Agent still waits. Try again — read each question carefully.</div>
+      <div class="actions" style="justify-content: center; margin-top: 18px;">
+        <button class="btn btn-primary" onclick="restart()">▸ Retry</button>
+      </div>`;
+  } else {
+    completedQueries.add(currentQuery);
+    const isBoss = q.isBoss;
+    const bossClass = isBoss ? ' boss-win' : '';
+    const banner = isBoss ? '★ AGENT-8 REUNITED WITH PRINCESS AGENT ★' : '▸ MISSION COMPLETE';
+    const streakNote = bestStreak >= 3 ? `BEST STREAK ${bestStreak}` : '';
+    const msg = isBoss
+      ? "Agent-8 reunites with Princess Agent at last."
+      : "Agent-8 made it across. Try another mission to keep learning.";
+
+    card.className = 'final show' + bossClass;
+    card.innerHTML = `
+      <div class="final-banner">${banner}</div>
+      <div class="final-msg" style="margin-top: 16px;">${msg}</div>
+      ${streakNote ? `<div class="final-detail" style="margin-top: 14px;">${streakNote}</div>` : ''}
+      <div class="actions" style="justify-content: center; margin-top: 20px;">
+        <button class="btn ${isBoss ? 'btn-pink' : 'btn-primary'}" onclick="restart()">▸ Continue</button>
+      </div>`;
+  }
+  card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function restart() {
+  stopRomanticDance();
+  document.getElementById('finalCard').classList.remove('show');
+  document.getElementById('quiz').classList.remove('show');
+  document.getElementById('revealPanel').classList.remove('show');
+  document.getElementById('mission').classList.remove('show');
+  document.getElementById('querySection').style.display = 'block';
+  document.getElementById('gaps').innerHTML = '';
+  document.getElementById('destination').innerHTML = '';
+  const robot = document.getElementById('robot');
+  robot.style.opacity = 1;
+  robot.setAttribute('transform', 'translate(' + ROBOT_START_X + ', 165)');
+  setRobotExpression('normal');
+  setSceneTheme('night');
+  lives = MAX_LIVES;
+  updateLives();
+  currentQuery = -1;
+  buildQueryGrid();
+  document.getElementById('querySection').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  const key = e.key.toLowerCase();
+
+  if (['1','2','3'].includes(key)) {
+    const qi = parseInt(key) - 1;
+    if (qi < queries.length) {
+      const card = document.getElementById('qcard' + qi);
+      if (!card.classList.contains('locked')) { e.preventDefault(); startQuery(qi); }
+    }
+    return;
+  }
+  if (['a','b','c','d'].includes(key)) {
+    const idx = ['a','b','c','d'].indexOf(key);
+    const optBtn = document.getElementById('opt' + idx);
+    if (optBtn && !optBtn.disabled) { e.preventDefault(); answer(idx); }
+    return;
+  }
+  if (e.key === 'Enter') {
+    const btn = document.getElementById('continueBtn');
+    if (btn) { e.preventDefault(); btn.click(); }
+  }
+});
+
+updateLives();
+buildQueryGrid();
+</script>
+</body>
+</html>
