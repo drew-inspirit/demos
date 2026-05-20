@@ -1,0 +1,1904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Design Your AI Workflow — Inspirit AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* n8n-ish palette */
+    --bg: #1e1f25;
+    --bg-2: #15161b;
+    --panel: #2a2d36;
+    --panel-2: #232630;
+    --panel-3: #353945;
+    --line: #3a3f4b;
+    --line-soft: #2f333d;
+    --ink: #f5f6f8;
+    --ink-soft: #c4c7d1;
+    --ink-mute: #8a8f9c;
+
+    --c-input:  #ff6d5a;   /* trigger orange-red */
+    --c-llm:    #a78bfa;   /* purple (AI) */
+    --c-tool:   #34d399;   /* green (tools/code) */
+    --c-logic:  #fbbf24;   /* amber */
+    --c-output: #60a5fa;   /* blue */
+    --c-custom: #f472b6;
+
+    --accent: #ff6d5a;
+    --good:   #34d399;
+    --warn:   #fbbf24;
+    --bad:    #f87171;
+
+    --radius: 10px;
+    --shadow: 0 10px 30px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg-2);color:var(--ink);font-family:'Geist', system-ui, sans-serif;-webkit-font-smoothing:antialiased}
+  body{min-height:100vh}
+  kbd{background:var(--panel-3);padding:1px 6px;border-radius:4px;font-family:'Geist Mono', ui-monospace, monospace;font-size:11px;color:var(--ink-soft)}
+
+  /* ---------- HEADER ---------- */
+  header.top{
+    padding:14px 22px;border-bottom:1px solid var(--line);background:var(--bg);
+    position:sticky;top:0;z-index:50;
+  }
+  .top-row{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand .logo{
+    width:26px;height:26px;border-radius:5px;background:var(--c-input);
+    display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;
+    font-family:'Geist Mono',ui-monospace,monospace;
+  }
+  .brand h1{font-weight:600;font-size:15px;letter-spacing:-0.015em;margin:0;color:var(--ink)}
+  .brand .tag{font-size:10px;letter-spacing:.12em;color:var(--ink-mute);text-transform:uppercase;font-weight:500;margin-top:1px;display:block;font-family:'Geist Mono',ui-monospace,monospace}
+  .step-nav{display:flex;gap:2px;background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:3px}
+  .step-btn{
+    border:none;background:transparent;font-family:'Geist',system-ui,sans-serif;font-weight:500;font-size:12px;
+    padding:6px 12px;border-radius:5px;cursor:pointer;color:var(--ink-mute);transition:all .12s;
+    display:flex;align-items:center;gap:7px;letter-spacing:-0.005em;
+  }
+  .step-btn .num{
+    width:16px;height:16px;border-radius:4px;background:var(--panel-3);color:var(--ink-mute);
+    display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;
+    font-family:'Geist Mono',ui-monospace,monospace;
+  }
+  .step-btn.active{background:var(--panel-3);color:var(--ink)}
+  .step-btn.active .num{background:var(--c-input);color:#fff}
+  .step-btn:hover:not(.active){color:var(--ink)}
+
+  /* ---------- LAYOUT ---------- */
+  main{padding:24px}
+  .stage{display:none}
+  .stage.active{display:block}
+
+  .stage-head{margin-bottom:24px;max-width:880px}
+  .stage-head .eyebrow{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-mute);font-weight:500;margin-bottom:10px;font-family:'Geist Mono',ui-monospace,monospace}
+  .stage-head h2{font-weight:600;font-size:24px;letter-spacing:-0.02em;line-height:1.15;margin:0 0 8px;color:var(--ink)}
+  .stage-head p{color:var(--ink-soft);font-size:13px;line-height:1.55;margin:0;max-width:680px}
+
+  /* ---------- STAGE 1: PLAN ---------- */
+  .plan-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:20px;max-width:1280px}
+  @media(max-width:1024px){.plan-grid{grid-template-columns:1fr}}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow)}
+
+  .field{margin-bottom:20px}
+  .field:last-child{margin-bottom:0}
+  .field-label{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+  .field-num{
+    width:24px;height:24px;border-radius:5px;color:#fff;
+    display:inline-flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;
+    font-family:'Geist Mono',ui-monospace,monospace;
+  }
+  .field-num.input{background:var(--c-input)}
+  .field-num.sub{background:var(--c-llm)}
+  .field-num.tool{background:var(--c-tool);color:#0c1f17}
+  .field-num.out{background:var(--c-output)}
+  .field-title{font-weight:500;font-size:13px;color:var(--ink);letter-spacing:-0.005em}
+  .field-hint{color:var(--ink-mute);font-size:12px;margin-bottom:6px;line-height:1.5;margin-left:34px}
+  .field textarea, .field input{
+    width:100%;border:1px solid var(--line);border-radius:6px;padding:10px 12px;
+    font-family:'Geist',system-ui,sans-serif;font-size:13px;color:var(--ink);background:var(--panel-2);
+    resize:vertical;transition:border .12s;
+  }
+  .field textarea:focus, .field input:focus{outline:none;border-color:var(--ink-mute);background:var(--bg)}
+  .field textarea{min-height:64px}
+
+  .examples-card h3{font-weight:600;font-size:14px;margin:0 0 3px;color:var(--ink);letter-spacing:-0.01em}
+  .examples-card .sub{color:var(--ink-mute);font-size:12px;margin-bottom:14px}
+  .example-pill{
+    width:100%;text-align:left;background:var(--panel-2);border:1px solid var(--line);border-radius:6px;
+    padding:11px 13px;margin-bottom:6px;cursor:pointer;font-family:inherit;transition:all .12s;
+    display:flex;gap:11px;align-items:center;color:var(--ink);
+  }
+  .example-pill:hover{border-color:var(--ink-mute);background:var(--panel)}
+  .example-pill .emoji{font-size:18px;width:28px;height:28px;background:var(--panel-3);border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .example-pill .meta{flex:1;min-width:0}
+  .example-pill .name{font-weight:500;font-size:13px;margin-bottom:2px;letter-spacing:-0.005em}
+  .example-pill .desc{font-size:11px;color:var(--ink-mute);line-height:1.4}
+
+  .plan-actions{margin-top:20px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .btn{
+    border:1px solid var(--line);background:var(--panel-2);color:var(--ink);padding:8px 14px;border-radius:6px;
+    font-family:inherit;font-weight:500;font-size:12px;cursor:pointer;transition:all .12s;
+    display:inline-flex;align-items:center;gap:6px;letter-spacing:-0.005em;
+  }
+  .btn:hover{background:var(--panel-3);border-color:var(--ink-mute)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover{background:#ff5440;border-color:#ff5440}
+  .btn.ghost{background:transparent}
+  .btn.run{background:var(--good);border-color:var(--good);color:#0c1f17}
+  .btn.run:hover{background:#22c578}
+  .btn.run.stop{background:var(--bad);border-color:var(--bad);color:#fff}
+
+  /* ---------- STAGE 2: BUILD ---------- */
+  .builder{
+    display:grid;grid-template-columns:240px 1fr 280px;gap:12px;
+    height:calc(100vh - 220px);min-height:600px;
+  }
+  @media(max-width:1100px){.builder{grid-template-columns:200px 1fr}.inspector{display:none}}
+
+  .palette{
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+    padding:14px;overflow-y:auto;
+  }
+  .palette h4{
+    font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-mute);
+    margin:0 0 8px;font-weight:600;display:flex;align-items:center;gap:8px;
+  }
+  .palette h4:not(:first-child){margin-top:18px}
+  .palette h4 .cat-tag{
+    width:8px;height:8px;border-radius:2px;display:inline-block;
+  }
+  .palette h4 .add{
+    background:transparent;border:1px solid var(--line);color:var(--ink-mute);width:18px;height:18px;border-radius:4px;
+    cursor:pointer;font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;margin-left:auto;
+  }
+  .palette h4 .add:hover{background:var(--panel-3);color:var(--ink);border-color:var(--ink-mute)}
+  .node-template{
+    background:transparent;border:1px solid var(--line);border-radius:6px;
+    padding:7px 9px;margin-bottom:4px;cursor:grab;font-size:12px;
+    display:flex;align-items:center;gap:9px;transition:all .12s;user-select:none;color:var(--ink-soft);
+  }
+  .node-template:hover{border-color:var(--ink-mute);background:var(--panel-2);color:var(--ink)}
+  .node-template:active{cursor:grabbing}
+  .node-template .ico{
+    width:20px;height:20px;border-radius:4px;background:var(--panel-3);
+    display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;
+  }
+  .node-template.input .ico{background:rgba(255,109,90,.15);color:var(--c-input)}
+  .node-template.llm .ico{background:rgba(167,139,250,.15);color:var(--c-llm)}
+  .node-template.tool .ico{background:rgba(52,211,153,.15);color:var(--c-tool)}
+  .node-template.logic .ico{background:rgba(251,191,36,.15);color:var(--c-logic)}
+  .node-template.output .ico{background:rgba(96,165,250,.15);color:var(--c-output)}
+  .node-template.custom .ico{background:rgba(244,114,182,.15);color:var(--c-custom)}
+  .node-template .name{font-weight:500;line-height:1.2;flex:1;letter-spacing:-0.005em}
+
+  /* CANVAS */
+  .canvas-wrap{
+    background:var(--bg-2);border:1px solid var(--line);border-radius:var(--radius);
+    position:relative;overflow:hidden;
+  }
+  .canvas-toolbar{
+    position:absolute;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;
+    gap:8px;z-index:10;pointer-events:none;flex-wrap:wrap;
+  }
+  .canvas-toolbar > *{pointer-events:auto}
+  .toolbar-group{
+    display:flex;gap:4px;background:rgba(42,45,54,.92);backdrop-filter:blur(8px);
+    border:1px solid var(--line);border-radius:8px;padding:4px;align-items:center;
+  }
+  .tool-btn{
+    border:none;background:transparent;padding:5px 10px;border-radius:5px;cursor:pointer;
+    font-family:inherit;font-size:12px;font-weight:500;color:var(--ink-soft);
+    display:inline-flex;align-items:center;gap:6px;letter-spacing:-0.005em;
+  }
+  .tool-btn:hover{background:var(--panel-3);color:var(--ink)}
+  .tool-btn.run-btn{background:var(--good);color:#0c1f17;padding:5px 12px;font-weight:600}
+  .tool-btn.run-btn:hover{background:#22c578}
+  .tool-btn.run-btn.stop{background:var(--bad);color:#fff}
+  .tool-btn.run-btn.stop:hover{background:#ef5050}
+
+  .cost-pill{
+    font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:var(--ink-mute);
+    padding:0 8px 0 10px;border-left:1px solid var(--line);margin-left:2px;
+  }
+  .cost-pill b{color:var(--ink-soft);font-weight:500}
+
+  .canvas{
+    width:100%;height:100%;
+    background:var(--bg-2);
+    position:relative;cursor:default;overflow:hidden;
+  }
+  .canvas.panning{cursor:grabbing}
+  .canvas-viewport{
+    position:absolute;top:0;left:0;width:100%;height:100%;
+    transform-origin:0 0;
+    background-image: radial-gradient(circle, #2f333d 1px, transparent 1px);
+    background-size:18px 18px;
+    background-position:0 0;
+    background-repeat:repeat;
+    background-color:transparent;
+    /* expand beyond visible area for panning room */
+    min-width:300%;min-height:300%;
+  }
+  .cost-ref{
+    color:var(--ink-mute);font-size:10px;font-style:italic;
+    margin-left:4px;font-family:'Geist',system-ui,sans-serif;font-weight:400;
+  }
+  .canvas-empty{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    color:var(--ink-mute);font-size:13px;text-align:center;padding:24px;pointer-events:none;
+  }
+  .canvas-empty .big{font-size:18px;color:var(--ink-soft);font-weight:700;margin-bottom:6px}
+
+  /* WORKFLOW NODE — n8n look */
+  .wf-node{
+    position:absolute;background:var(--panel);border:1px solid var(--line);border-radius:8px;
+    padding:0;width:96px;cursor:grab;user-select:none;transition:transform .08s, box-shadow .12s, border-color .12s;
+    color:var(--ink);
+  }
+  .wf-node:hover{border-color:var(--ink-mute)}
+  .wf-node:active{cursor:grabbing}
+  .wf-node.selected{border-color:var(--accent);box-shadow:0 0 0 2px rgba(255,109,90,.25)}
+  .wf-node.executing{border-color:var(--warn);box-shadow:0 0 0 2px rgba(251,191,36,.3), 0 0 18px rgba(251,191,36,.4)}
+  .wf-node.done{border-color:var(--good)}
+  .wf-node .body{
+    height:80px;display:flex;align-items:center;justify-content:center;font-size:30px;
+    border-radius:7px 7px 0 0;position:relative;
+  }
+  .wf-node[data-type="input"]  .body{background:rgba(255,109,90,.12);color:var(--c-input)}
+  .wf-node[data-type="llm"]    .body{background:rgba(167,139,250,.12);color:var(--c-llm)}
+  .wf-node[data-type="tool"]   .body{background:rgba(52,211,153,.12);color:var(--c-tool)}
+  .wf-node[data-type="logic"]  .body{background:rgba(251,191,36,.12);color:var(--c-logic)}
+  .wf-node[data-type="output"] .body{background:rgba(96,165,250,.12);color:var(--c-output)}
+  .wf-node[data-type="custom"] .body{background:rgba(244,114,182,.12);color:var(--c-custom)}
+
+  .wf-node .trigger-mark{
+    position:absolute;top:-8px;left:-8px;width:20px;height:20px;border-radius:50%;
+    background:var(--c-input);color:#fff;display:flex;align-items:center;justify-content:center;
+    font-size:11px;border:2px solid var(--bg-2);
+  }
+  .wf-node .label{
+    text-align:center;font-size:11px;font-weight:500;color:var(--ink);
+    padding:8px 4px 2px;line-height:1.25;word-wrap:break-word;letter-spacing:-0.005em;
+  }
+  .wf-node .sub-label{
+    text-align:center;font-size:9px;color:var(--ink-mute);padding:0 4px 6px;
+    font-family:'Geist Mono',ui-monospace,monospace;text-transform:uppercase;letter-spacing:.08em;
+  }
+  .wf-node .cost-badge{
+    position:absolute;bottom:-7px;right:-4px;background:var(--panel-3);border:1px solid var(--line);
+    color:var(--ink-soft);font-size:9px;padding:1px 6px;border-radius:10px;
+    font-family:'Geist Mono',ui-monospace,monospace;font-weight:500;white-space:nowrap;
+  }
+  .wf-node.executing .cost-badge{background:var(--warn);color:#0c1f17;border-color:var(--warn)}
+  .wf-node.done .cost-badge{background:var(--good);color:#0c1f17;border-color:var(--good)}
+
+  /* PORTS — MORE OBVIOUS */
+  .port{
+    position:absolute;width:14px;height:14px;border-radius:50%;
+    background:var(--panel-3);border:2px solid var(--ink-mute);
+    cursor:crosshair;z-index:3;transition:all .12s;
+  }
+  .port::after{
+    content:'';position:absolute;inset:-6px;border-radius:50%;
+  }
+  .port:hover{background:var(--accent);border-color:var(--accent);transform:scale(1.4)}
+  .port.connecting-source{background:var(--accent);border-color:var(--accent);box-shadow:0 0 0 4px rgba(255,109,90,.3)}
+  .port.target-hint{background:var(--good);border-color:var(--good);animation:pulse 1.2s infinite}
+  @keyframes pulse{
+    0%,100%{box-shadow:0 0 0 0 rgba(52,211,153,.5)}
+    50%{box-shadow:0 0 0 8px rgba(52,211,153,0)}
+  }
+  .port.out{right:-7px;top:50%;transform:translateY(-50%)}
+  .port.out:hover{transform:translateY(-50%) scale(1.4)}
+  .port.in{left:-7px;top:50%;transform:translateY(-50%)}
+  .port.in:hover{transform:translateY(-50%) scale(1.4)}
+  .port.top{top:-7px;left:50%;transform:translateX(-50%)}
+  .port.top:hover{transform:translateX(-50%) scale(1.4)}
+  .port.bottom{bottom:-7px;left:50%;transform:translateX(-50%)}
+  .port.bottom:hover{transform:translateX(-50%) scale(1.4)}
+
+  .port-hint{
+    position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);
+    background:var(--ink);color:var(--bg-2);font-size:10px;padding:3px 7px;border-radius:4px;
+    white-space:nowrap;font-weight:600;pointer-events:none;
+  }
+
+  #connections{position:absolute;inset:0;pointer-events:none;z-index:1;overflow:visible;width:100%;height:100%}
+  #connections path{stroke:var(--ink-mute);stroke-width:2;fill:none;pointer-events:stroke;cursor:pointer;transition:stroke .15s}
+  #connections path:hover{stroke:var(--bad);stroke-width:3}
+  #connections path.preview{stroke:var(--accent);stroke-dasharray:6,4;opacity:.8;pointer-events:none}
+  #connections path.active{stroke:var(--warn);stroke-width:3}
+  #connections .traveler{fill:var(--warn);filter:drop-shadow(0 0 6px var(--warn))}
+
+  /* trash bin */
+  .trash{
+    position:absolute;bottom:16px;right:16px;width:54px;height:54px;border-radius:50%;
+    background:var(--panel);border:2px dashed var(--line);display:flex;align-items:center;justify-content:center;
+    font-size:22px;color:var(--ink-mute);z-index:5;transition:all .15s;
+  }
+  .trash.hover{background:var(--bad);border-color:var(--bad);color:#fff;transform:scale(1.15)}
+
+  /* run results */
+  .run-panel{
+    position:absolute;left:10px;right:80px;bottom:10px;background:var(--panel);border:1px solid var(--line);
+    border-radius:8px;padding:12px 14px;max-height:160px;overflow-y:auto;z-index:6;
+    font-size:12px;display:none;
+  }
+  .run-panel.show{display:block}
+  .run-panel h5{margin:0 0 6px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-mute);font-weight:700}
+  .run-line{font-family:'Geist Mono', ui-monospace, monospace;font-size:11px;line-height:1.6;color:var(--ink-soft)}
+  .run-line .step{color:var(--warn);font-weight:700}
+  .run-line .ok{color:var(--good)}
+  .run-line .arrow{color:var(--ink-mute)}
+
+  /* INSPECTOR */
+  .inspector{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px;overflow-y:auto}
+  .inspector h4{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-mute);margin:0 0 10px;font-weight:700}
+  .inspector .empty{color:var(--ink-mute);font-size:12px;line-height:1.6}
+  .inspector label{font-size:11px;color:var(--ink-mute);font-weight:600;display:block;margin-bottom:5px;margin-top:12px}
+  .inspector label:first-of-type{margin-top:0}
+  .inspector input, .inspector textarea, .inspector select{
+    width:100%;border:1px solid var(--line);border-radius:6px;padding:7px 9px;
+    font-family:inherit;font-size:12px;background:var(--panel-2);color:var(--ink);
+  }
+  .inspector input:focus, .inspector textarea:focus{outline:none;border-color:var(--accent)}
+  .inspector textarea{min-height:54px;resize:vertical}
+  .inspector .delete{
+    margin-top:14px;width:100%;border:1px solid var(--bad);background:transparent;color:var(--bad);
+    padding:8px;border-radius:6px;font-family:inherit;font-weight:600;font-size:12px;cursor:pointer;
+  }
+  .inspector .delete:hover{background:var(--bad);color:#fff}
+
+  .help-block{
+    background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:12px;font-size:12px;line-height:1.55;color:var(--ink-soft);
+    margin-top:14px;
+  }
+  .help-block strong{color:var(--ink);display:block;margin-bottom:6px;font-size:11px;text-transform:uppercase;letter-spacing:.1em}
+
+  /* Challenge bar */
+  .challenge-bar{
+    background:var(--panel);
+    border:1px solid var(--line);border-left:3px solid var(--c-llm);
+    border-radius:8px;padding:12px 16px;margin-bottom:12px;
+    display:flex;gap:14px;align-items:center;flex-wrap:wrap;
+  }
+  .challenge-bar .challenge-tag{
+    font-family:'Geist Mono',ui-monospace,monospace;font-size:10px;letter-spacing:.15em;
+    color:var(--c-llm);font-weight:600;padding:4px 8px;border:1px solid var(--c-llm);border-radius:4px;
+    background:rgba(167,139,250,.08);flex-shrink:0;
+  }
+  .challenge-bar .text{flex:1;min-width:200px}
+  .challenge-bar .label{font-size:14px;color:var(--ink);font-weight:600;margin-bottom:2px;letter-spacing:-0.01em}
+  .challenge-bar .prompt{font-size:12px;color:var(--ink-soft);line-height:1.5}
+  .challenge-bar .actions{display:flex;gap:8px}
+
+  /* ---------- STAGE 3: SHIP ---------- */
+  .ship-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:20px;max-width:1280px}
+  @media(max-width:1024px){.ship-grid{grid-template-columns:1fr}}
+
+  .preview-card h3{font-weight:600;font-size:15px;margin:0 0 3px;letter-spacing:-0.01em}
+  .preview-card .sub{color:var(--ink-mute);font-size:12px;margin-bottom:14px}
+  #ship-canvas-frame{border:1px solid var(--line);border-radius:6px;background:var(--bg-2);height:420px;overflow:hidden;position:relative;
+    background-image: radial-gradient(circle, #2f333d 1px, transparent 1px);background-size:18px 18px;}
+
+  .checklist h3{font-weight:600;font-size:15px;margin:0 0 3px;letter-spacing:-0.01em}
+  .checklist .sub{color:var(--ink-mute);font-size:12px;margin-bottom:14px}
+  .check-item{display:flex;gap:10px;padding:10px 12px;border-radius:6px;margin-bottom:6px;border:1px solid var(--line);background:var(--panel-2)}
+  .check-item.pass{border-color:rgba(52,211,153,.35);background:rgba(52,211,153,.05)}
+  .check-item.fail{border-color:rgba(248,113,113,.35);background:rgba(248,113,113,.05)}
+  .check-icon{font-size:14px;flex-shrink:0;line-height:1.4;width:16px}
+  .check-text{font-size:12px;line-height:1.5}
+  .check-text strong{display:block;margin-bottom:2px;color:var(--ink);font-weight:500;letter-spacing:-0.005em}
+  .check-text span{color:var(--ink-mute)}
+
+  .export-row{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+
+  /* MODAL */
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(4px)}
+  .modal-bg.show{display:flex}
+  .modal{background:var(--panel);border:1px solid var(--line);border-radius:10px;max-width:480px;width:90%;padding:22px;color:var(--ink)}
+  .modal h3{font-weight:600;font-size:16px;margin:0 0 6px;letter-spacing:-0.01em}
+  .modal p{color:var(--ink-soft);font-size:13px;line-height:1.55;margin:0 0 12px}
+  .modal label{font-size:10px;color:var(--ink-mute);font-weight:500;display:block;margin:10px 0 5px;text-transform:uppercase;letter-spacing:.1em;font-family:'Geist Mono',ui-monospace,monospace}
+  .modal input, .modal select{width:100%;border:1px solid var(--line);border-radius:5px;padding:7px 10px;font-family:inherit;font-size:13px;background:var(--panel-2);color:var(--ink)}
+  .modal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+
+  /* Toast */
+  .toast{
+    position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--panel);
+    color:var(--ink);padding:10px 18px;border-radius:8px;font-weight:600;font-size:13px;z-index:300;
+    border:1px solid var(--line);box-shadow:var(--shadow);transition:opacity .3s;
+  }
+
+  /* Onboarding hint */
+  .hint-arrow{
+    position:absolute;background:var(--accent);color:#fff;padding:6px 12px;border-radius:6px;
+    font-size:12px;font-weight:600;z-index:30;pointer-events:none;
+    animation:bounce 1.2s infinite;
+  }
+  .hint-arrow::after{content:'';position:absolute;width:0;height:0}
+  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+
+  /* legend */
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;align-items:center}
+  .legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--ink-mute);font-family:'Geist Mono',ui-monospace,monospace}
+  .legend-item .dot{width:8px;height:8px;border-radius:2px}
+
+  /* Inline connection hint diagram */
+  .connect-hint{
+    margin-left:auto;display:flex;align-items:center;gap:8px;
+    background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:4px 10px 4px 8px;
+  }
+  .connect-hint-label{font-size:10px;color:var(--ink-mute);font-family:'Geist Mono',ui-monospace,monospace;text-transform:uppercase;letter-spacing:.1em}
+  .connect-hint svg{display:block;flex-shrink:0}
+  .connect-hint-text{font-size:11px;color:var(--ink-soft);font-weight:500}
+
+  /* Plan reminder bar (Step 2) */
+  .plan-bar{
+    background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--c-input);
+    border-radius:6px;margin-bottom:10px;overflow:hidden;
+  }
+  .plan-toggle{
+    width:100%;background:transparent;border:none;color:var(--ink);padding:10px 14px;
+    display:flex;align-items:center;gap:10px;cursor:pointer;font-family:inherit;text-align:left;
+  }
+  .plan-toggle:hover{background:var(--panel-2)}
+  .plan-toggle-icon{font-size:18px;color:var(--ink-soft);transition:transform .15s;display:inline-block;width:18px;line-height:1}
+  .plan-bar.open .plan-toggle-icon{transform:rotate(90deg)}
+  .plan-tag{
+    font-family:'Geist Mono',ui-monospace,monospace;font-size:10px;letter-spacing:.15em;
+    color:var(--c-input);font-weight:600;padding:3px 7px;border:1px solid var(--c-input);border-radius:4px;
+    background:rgba(255,109,90,.08);
+  }
+  .plan-summary-line{font-size:12px;color:var(--ink-mute);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-0.005em}
+  .plan-toggle-hint{font-size:11px;color:var(--ink-mute);font-style:italic;letter-spacing:-0.005em}
+  .plan-bar.open .plan-toggle-hint{display:none}
+  .plan-bar-body{
+    display:none;padding:6px 14px 14px;border-top:1px solid var(--line-soft);
+    flex-wrap:wrap;gap:12px;
+  }
+  .plan-bar.open .plan-bar-body{display:flex;align-items:flex-start}
+  .plan-row{display:flex;gap:9px;align-items:flex-start;min-width:220px;flex:1}
+  .plan-num{
+    width:20px;height:20px;border-radius:4px;color:#fff;flex-shrink:0;
+    display:inline-flex;align-items:center;justify-content:center;font-weight:600;font-size:11px;
+    font-family:'Geist Mono',ui-monospace,monospace;margin-top:2px;
+  }
+  .plan-num.input{background:var(--c-input)}
+  .plan-num.sub{background:var(--c-llm)}
+  .plan-num.tool{background:var(--c-tool);color:#0c1f17}
+  .plan-num.out{background:var(--c-output)}
+  .plan-row-label{display:block;font-size:10px;color:var(--ink-mute);font-family:'Geist Mono',ui-monospace,monospace;text-transform:uppercase;letter-spacing:.1em;margin-bottom:2px}
+  .plan-row-text{display:block;font-size:12px;color:var(--ink-soft);line-height:1.45;white-space:pre-line}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-row">
+    <div class="brand">
+      <div class="logo">w</div>
+      <div>
+        <h1>Design Your AI Workflow</h1>
+        <span class="tag">Inspirit AI — Builder Mode</span>
+      </div>
+    </div>
+    <div class="step-nav">
+      <button class="step-btn active" data-stage="plan"><span class="num">1</span>Plan</button>
+      <button class="step-btn" data-stage="build"><span class="num">2</span>Build</button>
+      <button class="step-btn" data-stage="ship"><span class="num">3</span>Ship</button>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<!-- ====== STAGE 1: PLAN ====== -->
+<section class="stage active" id="stage-plan">
+  <div class="stage-head">
+    <div class="eyebrow">Step 1 of 3 — Plan it on paper first</div>
+    <h2>What should your AI workflow do?</h2>
+    <p>Workflows shine on <strong style="color:var(--ink)">repeated, multi-step, structured tasks</strong> — the kind of work you'd do the same way every time. One-off creative tasks ("write me a poem") are better handled by just asking an AI directly. Before you start dragging boxes around, get clear on the four pieces every workflow needs.</p>
+  </div>
+
+  <div class="plan-grid">
+    <div class="panel">
+      <div class="field">
+        <div class="field-label">
+          <span class="field-num input">1</span>
+          <span class="field-title">Input — what triggers it?</span>
+        </div>
+        <div class="field-hint">A user click? A scheduled time? An uploaded file? An email arriving?</div>
+        <textarea id="plan-input" placeholder="e.g. Every weekday at 8 AM, OR a student uploads a PDF, OR a teacher types a topic…"></textarea>
+      </div>
+
+      <div class="field">
+        <div class="field-label">
+          <span class="field-num sub">2</span>
+          <span class="field-title">Sub-tasks — what happens, in order?</span>
+        </div>
+        <div class="field-hint">Break the job into 3–5 steps an AI assistant could do one at a time.</div>
+        <textarea id="plan-subtasks" placeholder="1. Read the document&#10;2. Pull out the main argument&#10;3. Write a 2-paragraph summary&#10;4. Translate to Spanish"></textarea>
+      </div>
+
+      <div class="field">
+        <div class="field-label">
+          <span class="field-num tool">3</span>
+          <span class="field-title">Tools — which tool handles each step?</span>
+        </div>
+        <div class="field-hint">An LLM? A web search? A specific API like Gmail or Whisper?</div>
+        <textarea id="plan-tools" placeholder="Step 1: PDF reader&#10;Step 2: LLM (Claude / GPT)&#10;Step 3: LLM&#10;Step 4: LLM"></textarea>
+      </div>
+
+      <div class="field">
+        <div class="field-label">
+          <span class="field-num out">4</span>
+          <span class="field-title">Output — what does it deliver, and to whom?</span>
+        </div>
+        <div class="field-hint">A Slack message? A Google Doc? An email? A spoken response?</div>
+        <textarea id="plan-output" placeholder="e.g. A Google Doc with the Spanish summary, shared with the student's class folder"></textarea>
+      </div>
+
+      <div class="plan-actions">
+        <button class="btn primary" onclick="goToStage('build')">Start building →</button>
+        <button class="btn ghost" onclick="clearPlan()">Clear plan</button>
+        <button class="btn" onclick="openChallengeModal()">Try a challenge</button>
+      </div>
+    </div>
+
+    <div class="panel examples-card">
+      <h3>Need a starting point?</h3>
+      <div class="sub">Load a real example to study, then customize it.</div>
+      <button class="example-pill" onclick="loadTemplate('email')">
+        <span class="emoji">📧</span>
+        <div class="meta"><div class="name">Morning Email Digest</div><div class="desc">Inbox → urgency-ranked Slack message</div></div>
+      </button>
+      <button class="example-pill" onclick="loadTemplate('research')">
+        <span class="emoji">🔬</span>
+        <div class="meta"><div class="name">Research Assistant</div><div class="desc">Topic → structured research brief</div></div>
+      </button>
+      <button class="example-pill" onclick="loadTemplate('social')">
+        <span class="emoji">📱</span>
+        <div class="meta"><div class="name">Social Media Writer</div><div class="desc">One blog → 3 platform-native posts</div></div>
+      </button>
+      <button class="example-pill" onclick="loadTemplate('meeting')">
+        <span class="emoji">📅</span>
+        <div class="meta"><div class="name">Meeting Summarizer</div><div class="desc">Audio → action items + Slack post</div></div>
+      </button>
+      <button class="example-pill" onclick="loadTemplate('blank')" style="border-style:dashed;margin-top:12px">
+        <span class="emoji">✨</span>
+        <div class="meta"><div class="name">Start from scratch</div><div class="desc">Design your own from blank canvas</div></div>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ====== STAGE 2: BUILD ====== -->
+<section class="stage" id="stage-build">
+  <div class="stage-head" style="margin-bottom:14px">
+    <div class="eyebrow">Step 2 of 3 — Drag, drop, connect</div>
+    <h2>Build your workflow visually</h2>
+    <div class="legend">
+      <div class="legend-item"><span class="dot" style="background:var(--c-input)"></span>Input</div>
+      <div class="legend-item"><span class="dot" style="background:var(--c-llm)"></span>AI</div>
+      <div class="legend-item"><span class="dot" style="background:var(--c-tool)"></span>Tool</div>
+      <div class="legend-item"><span class="dot" style="background:var(--c-logic)"></span>Logic</div>
+      <div class="legend-item"><span class="dot" style="background:var(--c-output)"></span>Output</div>
+      <div class="connect-hint">
+        <span class="connect-hint-label">To connect:</span>
+        <svg width="116" height="28" viewBox="0 0 116 28" fill="none">
+          <rect x="2" y="6" width="22" height="16" rx="3" fill="var(--panel-3)" stroke="var(--line)" stroke-width="1"/>
+          <circle cx="24" cy="14" r="3.5" fill="var(--panel-3)" stroke="var(--ink-soft)" stroke-width="1.5"/>
+          <path d="M27 14 L 89 14" stroke="var(--c-input)" stroke-width="1.5" stroke-dasharray="3,2"/>
+          <polygon points="89,14 85,11 85,17" fill="var(--c-input)"/>
+          <circle cx="92" cy="14" r="3.5" fill="var(--c-input)" stroke="var(--c-input)" stroke-width="1.5"/>
+          <rect x="92" y="6" width="22" height="16" rx="3" fill="var(--panel-3)" stroke="var(--line)" stroke-width="1"/>
+        </svg>
+        <span class="connect-hint-text">drag any circle → any circle</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Plan reminder bar -->
+  <div class="plan-bar" id="plan-bar" style="display:none">
+    <button class="plan-toggle" onclick="togglePlanBar()">
+      <span class="plan-toggle-icon" id="plan-toggle-icon">▸</span>
+      <span class="plan-tag">YOUR PLAN</span>
+      <span class="plan-toggle-hint">click to expand</span>
+    </button>
+    <div class="plan-bar-body" id="plan-bar-body">
+      <div class="plan-row"><span class="plan-num input">1</span><div><span class="plan-row-label">Input</span><span class="plan-row-text" id="plan-bar-input">—</span></div></div>
+      <div class="plan-row"><span class="plan-num sub">2</span><div><span class="plan-row-label">Sub-tasks</span><span class="plan-row-text" id="plan-bar-subtasks">—</span></div></div>
+      <div class="plan-row"><span class="plan-num tool">3</span><div><span class="plan-row-label">Tools</span><span class="plan-row-text" id="plan-bar-tools">—</span></div></div>
+      <div class="plan-row"><span class="plan-num out">4</span><div><span class="plan-row-label">Output</span><span class="plan-row-text" id="plan-bar-output">—</span></div></div>
+      <button class="btn ghost" style="font-size:11px;padding:5px 10px" onclick="goToStage('plan')">Edit plan ↗</button>
+    </div>
+  </div>
+
+  <!-- Challenge bar (shown when challenge is active) -->
+  <div class="challenge-bar" id="challenge-bar" style="display:none">
+    <div class="challenge-tag">CHALLENGE</div>
+    <div class="text">
+      <div class="label" id="challenge-name"></div>
+      <div class="prompt" id="challenge-prompt"></div>
+    </div>
+    <div class="actions">
+      <button class="btn" onclick="checkChallenge()">Check my answer</button>
+      <button class="btn ghost" onclick="clearChallenge()">Exit</button>
+    </div>
+  </div>
+
+  <div class="builder">
+    <!-- PALETTE -->
+    <aside class="palette" id="palette">
+      <h4><span class="cat-tag" style="background:var(--c-input)"></span>Inputs<button class="add" onclick="addCustom('input')" title="Add custom input">+</button></h4>
+      <div class="palette-section" data-cat="input">
+        <div class="node-template input" draggable="true" data-type="input" data-icon="👤" data-name="User Input"><span class="ico">👤</span><span class="name">User Input</span></div>
+        <div class="node-template input" draggable="true" data-type="input" data-icon="⏰" data-name="Scheduled Trigger"><span class="ico">⏰</span><span class="name">Scheduled Trigger</span></div>
+        <div class="node-template input" draggable="true" data-type="input" data-icon="📎" data-name="File Upload"><span class="ico">📎</span><span class="name">File Upload</span></div>
+        <div class="node-template input" draggable="true" data-type="input" data-icon="🔗" data-name="Webhook"><span class="ico">🔗</span><span class="name">Webhook</span></div>
+      </div>
+
+      <h4><span class="cat-tag" style="background:var(--c-llm)"></span>AI Steps<button class="add" onclick="addCustom('llm')" title="Add custom AI step">+</button></h4>
+      <div class="palette-section" data-cat="llm">
+        <div class="node-template llm" draggable="true" data-type="llm" data-icon="📝" data-name="LLM — Summarize"><span class="ico">📝</span><span class="name">Summarize</span></div>
+        <div class="node-template llm" draggable="true" data-type="llm" data-icon="🏷️" data-name="LLM — Classify"><span class="ico">🏷️</span><span class="name">Classify</span></div>
+        <div class="node-template llm" draggable="true" data-type="llm" data-icon="🎯" data-name="LLM — Extract"><span class="ico">🎯</span><span class="name">Extract</span></div>
+        <div class="node-template llm" draggable="true" data-type="llm" data-icon="✍️" data-name="LLM — Generate"><span class="ico">✍️</span><span class="name">Generate</span></div>
+      </div>
+
+      <h4><span class="cat-tag" style="background:var(--c-tool)"></span>Tools<button class="add" onclick="addCustom('tool')" title="Add custom tool">+</button></h4>
+      <div class="palette-section" data-cat="tool">
+        <div class="node-template tool" draggable="true" data-type="tool" data-icon="🔍" data-name="Web Search"><span class="ico">🔍</span><span class="name">Web Search</span></div>
+        <div class="node-template tool" draggable="true" data-type="tool" data-icon="🌐" data-name="Read URL"><span class="ico">🌐</span><span class="name">Read URL</span></div>
+        <div class="node-template tool" draggable="true" data-type="tool" data-icon="📬" data-name="Gmail API"><span class="ico">📬</span><span class="name">Gmail API</span></div>
+        <div class="node-template tool" draggable="true" data-type="tool" data-icon="🎙️" data-name="Whisper API"><span class="ico">🎙️</span><span class="name">Whisper API</span></div>
+        <div class="node-template tool" draggable="true" data-type="tool" data-icon="🗃️" data-name="Database"><span class="ico">🗃️</span><span class="name">Database</span></div>
+      </div>
+
+      <h4><span class="cat-tag" style="background:var(--c-logic)"></span>Logic<button class="add" onclick="addCustom('logic')" title="Add custom logic">+</button></h4>
+      <div class="palette-section" data-cat="logic">
+        <div class="node-template logic" draggable="true" data-type="logic" data-icon="🔀" data-name="If / Else"><span class="ico">🔀</span><span class="name">If / Else</span></div>
+        <div class="node-template logic" draggable="true" data-type="logic" data-icon="🔁" data-name="Loop"><span class="ico">🔁</span><span class="name">Loop</span></div>
+      </div>
+
+      <h4><span class="cat-tag" style="background:var(--c-output)"></span>Outputs<button class="add" onclick="addCustom('output')" title="Add custom output">+</button></h4>
+      <div class="palette-section" data-cat="output">
+        <div class="node-template output" draggable="true" data-type="output" data-icon="💬" data-name="Slack Message"><span class="ico">💬</span><span class="name">Slack Message</span></div>
+        <div class="node-template output" draggable="true" data-type="output" data-icon="✉️" data-name="Send Email"><span class="ico">✉️</span><span class="name">Send Email</span></div>
+        <div class="node-template output" draggable="true" data-type="output" data-icon="📄" data-name="Google Doc"><span class="ico">📄</span><span class="name">Google Doc</span></div>
+        <div class="node-template output" draggable="true" data-type="output" data-icon="📺" data-name="Show in App"><span class="ico">📺</span><span class="name">Show in App</span></div>
+      </div>
+    </aside>
+
+    <!-- CANVAS -->
+    <div class="canvas-wrap">
+      <div class="canvas-toolbar">
+        <div class="toolbar-group">
+          <button class="tool-btn run-btn" id="run-btn" onclick="runWorkflow()">▶ Run</button>
+          <span class="cost-pill" title="Rough teaching estimates — actual costs vary by model and usage. For reference only.">~<b id="total-cost">$0.00</b> · ~<b id="total-time">0s</b> <span class="cost-ref">ref. only</span></span>
+        </div>
+        <div class="toolbar-group">
+          <button class="tool-btn" onclick="zoomBy(-0.1)" title="Zoom out">−</button>
+          <button class="tool-btn" onclick="resetView()" title="Reset zoom" id="zoom-label" style="font-family:'Geist Mono',ui-monospace,monospace;min-width:46px;justify-content:center">100%</button>
+          <button class="tool-btn" onclick="zoomBy(0.1)" title="Zoom in">+</button>
+          <button class="tool-btn" onclick="fitToView()" title="Fit to view">⛶ Fit</button>
+        </div>
+        <div class="toolbar-group">
+          <button class="tool-btn" onclick="autoLayout()" title="Auto-arrange">⇄ Arrange</button>
+          <button class="tool-btn" onclick="clearCanvas()" title="Clear canvas">↻ Clear</button>
+          <button class="tool-btn" onclick="goToStage('ship')">Finish →</button>
+        </div>
+      </div>
+      <div class="canvas" id="canvas">
+        <div class="canvas-viewport" id="canvas-viewport">
+          <svg id="connections"></svg>
+        </div>
+        <div class="canvas-empty" id="canvas-empty">
+          <div>
+            <div class="big">Drag a node here to start</div>
+            <div>Or load an example from Step 1.</div>
+          </div>
+        </div>
+        <div class="trash" id="trash" title="Drop a node here to delete">🗑️</div>
+        <div class="run-panel" id="run-panel">
+          <h5>▶ Run Output</h5>
+          <div id="run-log"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INSPECTOR -->
+    <aside class="inspector" id="inspector">
+      <h4>Inspector</h4>
+      <div id="inspector-empty" class="empty">
+        Click a node to edit its name and notes.
+        <div class="help-block">
+          <strong>How to connect nodes</strong>
+          1. Hover a node — you'll see four small circles (top, bottom, left, right).<br>
+          2. <b style="color:var(--ink)">Click and drag</b> from any circle to <em>any</em> circle on another node — the closest port pair is picked automatically.<br>
+          3. Release — the arrow appears.<br><br>
+          <strong>Navigate the canvas</strong>
+          Scroll to zoom. Click and drag empty space to pan. Use the toolbar buttons to fit or reset the view.<br><br>
+          <strong>To delete</strong>
+          Drag a node onto the <span style="font-size:14px">🗑️</span>, or select it and press <kbd>Delete</kbd>. Click a connection line to delete it.
+        </div>
+      </div>
+      <div id="inspector-form" style="display:none">
+        <label>Type</label>
+        <input id="i-type" disabled />
+        <label>Name</label>
+        <input id="i-name" />
+        <label>Notes (e.g. the prompt, the config)</label>
+        <textarea id="i-notes" placeholder="What does this step actually do?"></textarea>
+        <button class="delete" onclick="deleteSelected()">Delete node</button>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- ====== STAGE 3: SHIP ====== -->
+<section class="stage" id="stage-ship">
+  <div class="stage-head">
+    <div class="eyebrow">Step 3 of 3 — Review &amp; share</div>
+    <h2>Your AI workflow is ready 🎉</h2>
+    <p>Take one last look, run the self-check, and export your chart as a PNG or JSON.</p>
+  </div>
+
+  <div class="ship-grid">
+    <div class="panel preview-card">
+      <h3>Your workflow chart</h3>
+      <div class="sub">A snapshot of what you built.</div>
+      <div id="ship-canvas-frame"></div>
+      <div class="export-row">
+        <button class="btn primary" onclick="exportPNG()">⬇ Download PNG</button>
+        <button class="btn ghost" onclick="goToStage('build')">← Back to edit</button>
+      </div>
+    </div>
+
+    <div class="panel checklist">
+      <h3>Self-check</h3>
+      <div class="sub">A good AI workflow has all four pieces wired up in order.</div>
+      <div id="checks"></div>
+
+      <div style="margin-top:18px;padding-top:18px;border-top:1px solid var(--line)">
+        <h3 style="font-size:16px;margin-bottom:8px">Your plan notes</h3>
+        <div id="plan-summary" style="font-size:12px;color:var(--ink-soft);line-height:1.6"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- modal -->
+<div class="modal-bg" id="modal-bg">
+  <div class="modal" id="modal-content">
+    <h3 id="modal-title">Heads up</h3>
+    <p id="modal-text"></p>
+    <div id="modal-body"></div>
+    <div class="actions">
+      <button class="btn ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn primary" id="modal-confirm">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   STATE & CONSTANTS
+========================================================= */
+const state = {
+  nodes: [],
+  edges: [],
+  selected: null,
+  nextId: 1,
+  dragging: null,
+  connecting: null,
+  customNodes: [],
+  challenge: null,
+  running: false,
+  view: { zoom: 1, panX: 0, panY: 0 },
+  panning: null,  // {startX, startY, startPanX, startPanY}
+};
+
+// Cost & latency model (rough teaching estimates, not real prices)
+const COSTS = {
+  input:  { cost: 0,      time: 0,    label: 'free' },
+  llm:    { cost: 0.012,  time: 2.4,  label: 'paid' },
+  tool:   { cost: 0.001,  time: 0.6,  label: 'cheap' },
+  logic:  { cost: 0,      time: 0.05, label: 'free' },
+  output: { cost: 0,      time: 0.3,  label: 'free' },
+  custom: { cost: 0.005,  time: 1.0,  label: 'est' },
+};
+
+const CATEGORY_LABELS = {
+  input:'Input', llm:'AI Step', tool:'Tool', logic:'Logic', output:'Output', custom:'Custom'
+};
+const CATEGORY_ICONS_DEFAULT = {
+  input:'⚡', llm:'🧠', tool:'🛠️', logic:'🔀', output:'📤', custom:'✨'
+};
+
+/* =========================================================
+   STAGE SWITCHING
+========================================================= */
+function goToStage(name){
+  document.querySelectorAll('.stage').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.step-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('stage-'+name).classList.add('active');
+  document.querySelector(`.step-btn[data-stage="${name}"]`).classList.add('active');
+  if(name==='ship') renderShip();
+  if(name==='build') refreshPlanBar();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function refreshPlanBar(){
+  const pi = document.getElementById('plan-input').value.trim();
+  const ps = document.getElementById('plan-subtasks').value.trim();
+  const pt = document.getElementById('plan-tools').value.trim();
+  const po = document.getElementById('plan-output').value.trim();
+  const bar = document.getElementById('plan-bar');
+  if(!pi && !ps && !pt && !po){ bar.style.display='none'; return; }
+  bar.style.display = 'block';
+
+  document.getElementById('plan-bar-input').textContent = pi || '—';
+  document.getElementById('plan-bar-subtasks').textContent = ps || '—';
+  document.getElementById('plan-bar-tools').textContent = pt || '—';
+  document.getElementById('plan-bar-output').textContent = po || '—';
+}
+
+function togglePlanBar(){
+  document.getElementById('plan-bar').classList.toggle('open');
+}
+document.querySelectorAll('.step-btn').forEach(b=>{
+  b.addEventListener('click',()=>goToStage(b.dataset.stage));
+});
+
+/* =========================================================
+   PLAN
+========================================================= */
+function clearPlan(){
+  ['plan-input','plan-subtasks','plan-tools','plan-output'].forEach(id=>document.getElementById(id).value='');
+}
+
+/* =========================================================
+   TEMPLATES
+========================================================= */
+const templates = {
+  email: {
+    plan: {
+      input: "Every weekday at 7:00 AM",
+      subtasks: "1. Read all unread Gmail from last 24h\n2. Score each by urgency\n3. Write a 2-sentence summary per email\n4. Group into Urgent / FYI / Skip",
+      tools: "Gmail API → LLM (classify) → LLM (summarize) → Slack API",
+      output: "A Slack DM with the daily digest, urgent items pinned to top"
+    },
+    nodes: [
+      {type:'input', icon:'⏰', name:'7 AM Daily',      x:40,  y:120},
+      {type:'tool',  icon:'📬', name:'Gmail API',        x:180, y:120},
+      {type:'llm',   icon:'🏷️', name:'Classify urgency', x:320, y:120},
+      {type:'llm',   icon:'📝', name:'Summarize each',   x:460, y:120},
+      {type:'output',icon:'💬', name:'Slack Digest',     x:600, y:120},
+    ],
+    edges: [[0,1],[1,2],[2,3],[3,4]],
+  },
+  research: {
+    plan: {
+      input: "User types a research question",
+      subtasks: "1. Search the web\n2. Read each source\n3. Extract key claims\n4. Synthesize a brief",
+      tools: "Web Search → URL Reader → LLM (extract) → LLM (synthesize)",
+      output: "A research brief with citations, shown in the app"
+    },
+    nodes: [
+      {type:'input', icon:'👤', name:'User Topic',       x:40,  y:120},
+      {type:'tool',  icon:'🔍', name:'Web Search',       x:180, y:120},
+      {type:'tool',  icon:'🌐', name:'Read URLs',        x:320, y:120},
+      {type:'llm',   icon:'🎯', name:'Extract Claims',   x:460, y:120},
+      {type:'llm',   icon:'✍️', name:'Write Brief',      x:600, y:120},
+      {type:'output',icon:'📺', name:'Show in App',      x:740, y:120},
+    ],
+    edges: [[0,1],[1,2],[2,3],[3,4],[4,5]],
+  },
+  social: {
+    plan: {
+      input: "User drops in a blog URL",
+      subtasks: "1. Read the blog\n2. Draft an X post\n3. Draft LinkedIn post\n4. Draft Instagram caption",
+      tools: "URL Reader → 3× LLM",
+      output: "3 posts shown in-app, ready to copy or schedule"
+    },
+    nodes: [
+      {type:'input', icon:'🔗', name:'Blog URL',         x:40,  y:200},
+      {type:'tool',  icon:'🌐', name:'Read URL',         x:180, y:200},
+      {type:'llm',   icon:'✍️', name:'Write X post',     x:340, y:60},
+      {type:'llm',   icon:'✍️', name:'Write LinkedIn',   x:340, y:200},
+      {type:'llm',   icon:'✍️', name:'Write Instagram',  x:340, y:340},
+      {type:'output',icon:'📺', name:'Show in App',      x:500, y:200},
+    ],
+    edges: [[0,1],[1,2],[1,3],[1,4],[2,5],[3,5],[4,5]],
+  },
+  meeting: {
+    plan: {
+      input: "User uploads a meeting recording",
+      subtasks: "1. Transcribe audio\n2. Extract action items\n3. Summarize decisions\n4. Post to Slack",
+      tools: "Whisper → LLM extract → LLM summarize → Slack",
+      output: "Slack message with action items + decisions"
+    },
+    nodes: [
+      {type:'input', icon:'📎', name:'Upload Recording', x:40,  y:160},
+      {type:'tool',  icon:'🎙️', name:'Whisper',          x:200, y:160},
+      {type:'llm',   icon:'🎯', name:'Action Items',     x:360, y:60},
+      {type:'llm',   icon:'📝', name:'Meeting Summary',  x:360, y:260},
+      {type:'output',icon:'💬', name:'Slack to Team',    x:540, y:160},
+    ],
+    edges: [[0,1],[1,2],[1,3],[2,4],[3,4]],
+  },
+  blank: { plan:{input:'',subtasks:'',tools:'',output:''}, nodes:[], edges:[] }
+};
+
+function loadTemplate(key){
+  const t = templates[key];
+  if(!t) return;
+  document.getElementById('plan-input').value = t.plan.input;
+  document.getElementById('plan-subtasks').value = t.plan.subtasks;
+  document.getElementById('plan-tools').value = t.plan.tools;
+  document.getElementById('plan-output').value = t.plan.output;
+
+  state.nodes = []; state.edges = [];
+  const idMap = {};
+  t.nodes.forEach((n,i)=>{
+    const id = 'n'+(state.nextId++);
+    idMap[i] = id;
+    state.nodes.push({id, type:n.type, icon:n.icon, name:n.name, notes:'', x:n.x, y:n.y});
+  });
+  t.edges.forEach(([a,b])=>{
+    state.edges.push({id:'e'+(state.nextId++), from:idMap[a], to:idMap[b]});
+  });
+  renderCanvas();
+  updateTotals();
+  showToast(key==='blank' ? 'Cleared!' : 'Template loaded — switch to Build →');
+}
+
+function showToast(msg, ms=2200){
+  const t = document.createElement('div');
+  t.className='toast'; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.style.opacity='0',ms);
+  setTimeout(()=>t.remove(),ms+400);
+}
+
+/* =========================================================
+   CUSTOM BLOCKS
+========================================================= */
+function addCustom(category){
+  openCustomModal(category);
+}
+
+function openCustomModal(category){
+  document.getElementById('modal-title').textContent = `Add custom ${CATEGORY_LABELS[category]} node`;
+  document.getElementById('modal-text').textContent = `Create your own building block. It'll be added to the ${CATEGORY_LABELS[category]} section of the palette.`;
+  document.getElementById('modal-body').innerHTML = `
+    <label>Name</label>
+    <input id="custom-name" placeholder="e.g. 'Sentiment Analyzer'" />
+    <label>Icon (one emoji)</label>
+    <input id="custom-icon" maxlength="2" placeholder="🪄" />
+    <label>Category</label>
+    <select id="custom-cat">
+      ${Object.entries(CATEGORY_LABELS).filter(([k])=>k!=='custom').map(([k,v])=>`<option value="${k}" ${k===category?'selected':''}>${v}</option>`).join('')}
+    </select>
+  `;
+  document.getElementById('modal-bg').classList.add('show');
+  setTimeout(()=>document.getElementById('custom-name').focus(),50);
+  const c = document.getElementById('modal-confirm');
+  const clone = c.cloneNode(true); clone.textContent = 'Add to palette';
+  c.parentNode.replaceChild(clone, c);
+  clone.addEventListener('click', ()=>{
+    const name = document.getElementById('custom-name').value.trim();
+    const icon = document.getElementById('custom-icon').value.trim() || CATEGORY_ICONS_DEFAULT[category];
+    const cat  = document.getElementById('custom-cat').value;
+    if(!name) return;
+    state.customNodes.push({name, icon, type:cat});
+    appendCustomToPalette({name, icon, type:cat});
+    closeModal();
+    showToast(`Added "${name}" to ${CATEGORY_LABELS[cat]}`);
+  });
+}
+
+function appendCustomToPalette(node){
+  const section = document.querySelector(`.palette-section[data-cat="${node.type}"]`);
+  if(!section) return;
+  const el = document.createElement('div');
+  el.className = `node-template ${node.type}`;
+  el.draggable = true;
+  el.dataset.type = node.type;
+  el.dataset.icon = node.icon;
+  el.dataset.name = node.name;
+  el.innerHTML = `<span class="ico">${escapeHTML(node.icon)}</span><span class="name">${escapeHTML(node.name)}</span><span style="font-size:9px;color:var(--ink-mute);font-family:'Geist Mono', ui-monospace, monospace">custom</span>`;
+  el.addEventListener('dragstart', e=>{
+    e.dataTransfer.setData('text/plain', JSON.stringify({type:node.type, name:node.name, icon:node.icon}));
+    e.dataTransfer.effectAllowed='copy';
+  });
+  section.appendChild(el);
+}
+
+/* =========================================================
+   CANVAS RENDERING
+========================================================= */
+const canvas = document.getElementById('canvas');
+const viewport = document.getElementById('canvas-viewport');
+const svg = document.getElementById('connections');
+const canvasEmpty = document.getElementById('canvas-empty');
+
+/* Convert client (browser) coordinates to canvas-space (pre-transform) */
+function clientToCanvas(clientX, clientY){
+  const r = canvas.getBoundingClientRect();
+  const z = state.view.zoom;
+  return {
+    x: (clientX - r.left - state.view.panX) / z,
+    y: (clientY - r.top  - state.view.panY) / z,
+  };
+}
+
+/* Apply current view transform to the viewport */
+function applyView(){
+  const v = state.view;
+  viewport.style.transform = `translate(${v.panX}px, ${v.panY}px) scale(${v.zoom})`;
+  // grid scales with zoom: keep dots ~18px in canvas-space
+  viewport.style.backgroundSize = (18 * v.zoom) + 'px ' + (18 * v.zoom) + 'px';
+  const label = document.getElementById('zoom-label');
+  if(label) label.textContent = Math.round(v.zoom * 100) + '%';
+}
+
+function zoomBy(delta, centerX, centerY){
+  const oldZoom = state.view.zoom;
+  const newZoom = Math.max(0.3, Math.min(2, oldZoom + delta));
+  if(newZoom === oldZoom) return;
+  // Zoom around point (default: canvas center)
+  const r = canvas.getBoundingClientRect();
+  const cx = centerX !== undefined ? centerX - r.left : r.width / 2;
+  const cy = centerY !== undefined ? centerY - r.top  : r.height / 2;
+  // Keep the point under the cursor fixed
+  state.view.panX = cx - (cx - state.view.panX) * (newZoom / oldZoom);
+  state.view.panY = cy - (cy - state.view.panY) * (newZoom / oldZoom);
+  state.view.zoom = newZoom;
+  applyView();
+  renderEdges();
+}
+
+function resetView(){
+  state.view = { zoom: 1, panX: 0, panY: 0 };
+  applyView();
+  renderEdges();
+}
+
+function fitToView(){
+  if(state.nodes.length === 0){ resetView(); return; }
+  let minX=Infinity, minY=Infinity, maxX=-Infinity, maxY=-Infinity;
+  state.nodes.forEach(n=>{
+    minX = Math.min(minX, n.x); minY = Math.min(minY, n.y);
+    maxX = Math.max(maxX, n.x + 96); maxY = Math.max(maxY, n.y + 116);
+  });
+  const pad = 40;
+  const w = (maxX - minX) + pad*2, h = (maxY - minY) + pad*2;
+  const r = canvas.getBoundingClientRect();
+  const z = Math.max(0.3, Math.min(1, Math.min(r.width / w, r.height / h)));
+  state.view.zoom = z;
+  state.view.panX = -minX * z + pad;
+  state.view.panY = -minY * z + pad;
+  applyView();
+  renderEdges();
+}
+
+function renderCanvas(){
+  viewport.querySelectorAll('.wf-node').forEach(n=>n.remove());
+  canvasEmpty.style.display = state.nodes.length===0 ? 'flex' : 'none';
+
+  state.nodes.forEach(n=>{
+    const el = document.createElement('div');
+    el.className = 'wf-node';
+    el.dataset.id = n.id;
+    el.dataset.type = n.type;
+    el.style.left = n.x + 'px';
+    el.style.top = n.y + 'px';
+    if(state.selected === n.id) el.classList.add('selected');
+
+    const isFirstInput = n.type==='input' && state.nodes.find(m=>m.type==='input')?.id === n.id;
+    const cost = COSTS[n.type] || COSTS.custom;
+
+    el.innerHTML = `
+      ${isFirstInput ? '<div class="trigger-mark">⚡</div>' : ''}
+      <div class="body">${escapeHTML(n.icon || CATEGORY_ICONS_DEFAULT[n.type])}</div>
+      <div class="label">${escapeHTML(n.name)}</div>
+      <div class="sub-label">${CATEGORY_LABELS[n.type]||n.type}</div>
+      <div class="cost-badge">${cost.cost ? '$'+cost.cost.toFixed(3) : 'free'} · ${cost.time}s</div>
+      <div class="port top"    data-port="top"    data-id="${n.id}" title="Drag from any circle to connect to another node"></div>
+      <div class="port bottom" data-port="bottom" data-id="${n.id}" title="Drag from any circle to connect to another node"></div>
+      <div class="port in"     data-port="in"     data-id="${n.id}" title="Drag from any circle to connect to another node"></div>
+      <div class="port out"    data-port="out"    data-id="${n.id}" title="Drag from any circle to connect to another node"></div>
+    `;
+    viewport.appendChild(el);
+  });
+  renderEdges();
+  updateTotals();
+}
+
+/* Returns the 4 port positions of a node in canvas-space coords */
+function nodePortPositions(node){
+  const el = document.querySelector(`.wf-node[data-id="${node.id}"]`);
+  const w = el ? el.offsetWidth : 96;
+  const h = el ? el.offsetHeight : 120;
+  return {
+    out:    { x: node.x + w,      y: node.y + h/2, side: 'out' },     // right
+    in:     { x: node.x,          y: node.y + h/2, side: 'in' },      // left
+    top:    { x: node.x + w/2,    y: node.y,       side: 'top' },
+    bottom: { x: node.x + w/2,    y: node.y + h,   side: 'bottom' },
+  };
+}
+
+/* Pick the best port pair between two nodes based on relative geometry */
+function bestPortPair(fromNode, toNode){
+  const fp = nodePortPositions(fromNode);
+  const tp = nodePortPositions(toNode);
+  const dx = (toNode.x + 48) - (fromNode.x + 48);  // approximate centers
+  const dy = toNode.y - fromNode.y;
+  // Prefer horizontal route if mostly horizontal, vertical if mostly vertical
+  if(Math.abs(dx) >= Math.abs(dy)){
+    return dx >= 0 ? [fp.out, tp.in] : [fp.in, tp.out];
+  } else {
+    return dy >= 0 ? [fp.bottom, tp.top] : [fp.top, tp.bottom];
+  }
+}
+
+/* Bezier control offset for smooth curve from a given port direction */
+function controlOffset(side, magnitude){
+  switch(side){
+    case 'out':    return [magnitude, 0];
+    case 'in':     return [-magnitude, 0];
+    case 'top':    return [0, -magnitude];
+    case 'bottom': return [0, magnitude];
+  }
+  return [0,0];
+}
+
+function renderEdges(){
+  svg.innerHTML = '';
+  state.edges.forEach(e=>{
+    const fromNode = state.nodes.find(n=>n.id===e.from);
+    const toNode   = state.nodes.find(n=>n.id===e.to);
+    if(!fromNode || !toNode) return;
+    const [fp, tp] = bestPortPair(fromNode, toNode);
+    const dist = Math.hypot(tp.x - fp.x, tp.y - fp.y);
+    const mag = Math.max(40, Math.min(120, dist * 0.4));
+    const [c1dx, c1dy] = controlOffset(fp.side, mag);
+    const [c2dx, c2dy] = controlOffset(tp.side, mag);
+    const c1x = fp.x + c1dx, c1y = fp.y + c1dy;
+    const c2x = tp.x + c2dx, c2y = tp.y + c2dy;
+    const d = `M ${fp.x} ${fp.y} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${tp.x} ${tp.y}`;
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d', d);
+    path.setAttribute('data-id', e.id);
+    path.addEventListener('click', ev=>{
+      ev.stopPropagation();
+      state.edges = state.edges.filter(x=>x.id!==e.id);
+      renderEdges();
+    });
+    svg.appendChild(path);
+
+    // arrowhead
+    const angle = Math.atan2(tp.y - c2y, tp.x - c2x);
+    const ah = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+    const size = 6;
+    const p1 = `${tp.x},${tp.y}`;
+    const p2 = `${tp.x - size*Math.cos(angle - .5)},${tp.y - size*Math.sin(angle - .5)}`;
+    const p3 = `${tp.x - size*Math.cos(angle + .5)},${tp.y - size*Math.sin(angle + .5)}`;
+    ah.setAttribute('points', `${p1} ${p2} ${p3}`);
+    ah.setAttribute('fill','#8a8f9c');
+    ah.setAttribute('data-edge-arrow', e.id);
+    svg.appendChild(ah);
+  });
+}
+
+function nodeRect(el){
+  const r = el.getBoundingClientRect();
+  const c = canvas.getBoundingClientRect();
+  return {
+    left:r.left-c.left, right:r.right-c.left, top:r.top-c.top, bottom:r.bottom-c.top,
+    midY:r.top-c.top+r.height/2, midX:r.left-c.left+r.width/2,
+  };
+}
+
+function escapeHTML(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+/* =========================================================
+   COST / LATENCY TOTALS
+========================================================= */
+function updateTotals(){
+  let cost=0, time=0;
+  state.nodes.forEach(n=>{ const c = COSTS[n.type]||COSTS.custom; cost+=c.cost; time+=c.time; });
+  document.getElementById('total-cost').textContent = '$'+cost.toFixed(3);
+  document.getElementById('total-time').textContent = time.toFixed(1)+'s';
+}
+
+/* =========================================================
+   DRAG NEW NODE FROM PALETTE
+========================================================= */
+function attachPaletteDrag(el){
+  el.addEventListener('dragstart', e=>{
+    e.dataTransfer.setData('text/plain', JSON.stringify({
+      type: el.dataset.type, name: el.dataset.name, icon: el.dataset.icon,
+    }));
+    e.dataTransfer.effectAllowed='copy';
+  });
+}
+document.querySelectorAll('.node-template').forEach(attachPaletteDrag);
+
+canvas.addEventListener('dragover', e=>{ e.preventDefault(); e.dataTransfer.dropEffect='copy'; });
+canvas.addEventListener('drop', e=>{
+  e.preventDefault();
+  try{
+    const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+    const pt = clientToCanvas(e.clientX, e.clientY);
+    state.nodes.push({
+      id:'n'+(state.nextId++),
+      type:data.type, icon:data.icon, name:data.name, notes:'',
+      x:Math.max(10, pt.x - 48), y:Math.max(10, pt.y - 50),
+    });
+    renderCanvas();
+  }catch(err){console.warn(err);}
+});
+
+/* =========================================================
+   MOUSE: drag nodes, connect ports, trash bin
+========================================================= */
+const trashEl = document.getElementById('trash');
+
+canvas.addEventListener('mousedown', e=>{
+  const port = e.target.closest('.port');
+  if(port){
+    // ANY port can start a connection
+    startConnection(port.dataset.id, port);
+    e.preventDefault();
+    return;
+  }
+  const nodeEl = e.target.closest('.wf-node');
+  if(nodeEl){
+    const id = nodeEl.dataset.id;
+    selectNode(id);
+    const node = state.nodes.find(n=>n.id===id);
+    const pt = clientToCanvas(e.clientX, e.clientY);
+    state.dragging = { id, dx: pt.x - node.x, dy: pt.y - node.y };
+  } else {
+    selectNode(null);
+    // empty canvas drag = pan
+    state.panning = {
+      startX: e.clientX, startY: e.clientY,
+      startPanX: state.view.panX, startPanY: state.view.panY,
+    };
+    canvas.classList.add('panning');
+  }
+});
+
+window.addEventListener('mousemove', e=>{
+  if(state.dragging){
+    const pt = clientToCanvas(e.clientX, e.clientY);
+    const node = state.nodes.find(n=>n.id===state.dragging.id);
+    if(!node) return;
+    node.x = Math.max(0, pt.x - state.dragging.dx);
+    node.y = Math.max(0, pt.y - state.dragging.dy);
+    const el = document.querySelector(`.wf-node[data-id="${node.id}"]`);
+    if(el){ el.style.left = node.x+'px'; el.style.top = node.y+'px'; }
+    renderEdges();
+
+    // trash bin proximity (client-space, since trash is outside viewport)
+    const tr = trashEl.getBoundingClientRect();
+    const overTrash = e.clientX > tr.left && e.clientX < tr.right && e.clientY > tr.top && e.clientY < tr.bottom;
+    trashEl.classList.toggle('hover', overTrash);
+  }
+  if(state.connecting){
+    const pt = clientToCanvas(e.clientX, e.clientY);
+    drawPreviewLine(state.connecting.startX, state.connecting.startY, pt.x, pt.y);
+    // highlight valid target ports — ANY port on another node is valid
+    document.querySelectorAll('.port').forEach(p=>{
+      if(p.dataset.id !== state.connecting.fromId){
+        const r = p.getBoundingClientRect();
+        const dist = Math.hypot(e.clientX-(r.left+r.width/2), e.clientY-(r.top+r.height/2));
+        p.classList.toggle('target-hint', dist < 60);
+      }
+    });
+  }
+  if(state.panning){
+    state.view.panX = state.panning.startPanX + (e.clientX - state.panning.startX);
+    state.view.panY = state.panning.startPanY + (e.clientY - state.panning.startY);
+    applyView();
+  }
+});
+
+window.addEventListener('mouseup', e=>{
+  // trash drop
+  if(state.dragging){
+    const tr = trashEl.getBoundingClientRect();
+    if(e.clientX > tr.left && e.clientX < tr.right && e.clientY > tr.top && e.clientY < tr.bottom){
+      const id = state.dragging.id;
+      state.edges = state.edges.filter(ed=>ed.from!==id && ed.to!==id);
+      state.nodes = state.nodes.filter(n=>n.id!==id);
+      if(state.selected===id){ state.selected=null; selectNode(null); }
+      renderCanvas();
+      showToast('Node deleted');
+    }
+    trashEl.classList.remove('hover');
+    state.dragging = null;
+  }
+  // connection drop — accept ANY port on a different node
+  if(state.connecting){
+    const port = e.target.closest('.port');
+    if(port && port.dataset.id !== state.connecting.fromId){
+      // dedupe in either direction
+      const exists = state.edges.find(ed=>
+        (ed.from===state.connecting.fromId && ed.to===port.dataset.id) ||
+        (ed.from===port.dataset.id && ed.to===state.connecting.fromId)
+      );
+      if(!exists){
+        state.edges.push({id:'e'+(state.nextId++), from:state.connecting.fromId, to:port.dataset.id});
+      }
+    }
+    // cleanup
+    document.querySelector('.port.connecting-source')?.classList.remove('connecting-source');
+    document.querySelectorAll('.port.target-hint').forEach(p=>p.classList.remove('target-hint'));
+    state.connecting = null;
+    renderEdges();
+  }
+  if(state.panning){
+    state.panning = null;
+    canvas.classList.remove('panning');
+  }
+});
+
+/* Mouse wheel zoom (Ctrl/Cmd+wheel always zooms; plain wheel also zooms here for simplicity) */
+canvas.addEventListener('wheel', e=>{
+  if(state.nodes.length === 0 && !e.ctrlKey && !e.metaKey) return; // let page scroll if empty
+  e.preventDefault();
+  const delta = e.deltaY < 0 ? 0.04 : -0.04;
+  zoomBy(delta, e.clientX, e.clientY);
+}, { passive: false });
+
+function startConnection(fromId, portEl){
+  const node = state.nodes.find(n=>n.id===fromId);
+  if(!node) return;
+  const ports = nodePortPositions(node);
+  const side = portEl.dataset.port; // 'in' | 'out' | 'top' | 'bottom'
+  const p = ports[side];
+  state.connecting = {fromId, startX:p.x, startY:p.y};
+  portEl.classList.add('connecting-source');
+}
+
+function drawPreviewLine(x1,y1,x2,y2){
+  svg.querySelectorAll('.preview').forEach(p=>p.remove());
+  const dx = x2-x1, dy = y2-y1;
+  const mag = Math.max(30, Math.min(100, Math.hypot(dx,dy)*0.4));
+  // figure rough direction from source side
+  const sideEl = document.querySelector('.port.connecting-source');
+  const side = sideEl ? sideEl.dataset.port : 'out';
+  const [c1dx, c1dy] = controlOffset(side, mag);
+  const c1x = x1 + c1dx, c1y = y1 + c1dy;
+  const d = `M ${x1} ${y1} C ${c1x} ${c1y}, ${x2} ${y2}, ${x2} ${y2}`;
+  const p = document.createElementNS('http://www.w3.org/2000/svg','path');
+  p.setAttribute('d',d); p.setAttribute('class','preview');
+  svg.appendChild(p);
+}
+
+/* =========================================================
+   INSPECTOR
+========================================================= */
+function selectNode(id){
+  state.selected = id;
+  document.querySelectorAll('.wf-node').forEach(el=>el.classList.toggle('selected', el.dataset.id===id));
+  const empty = document.getElementById('inspector-empty');
+  const form  = document.getElementById('inspector-form');
+  if(!id){ empty.style.display='block'; form.style.display='none'; return; }
+  empty.style.display='none'; form.style.display='block';
+  const n = state.nodes.find(x=>x.id===id);
+  document.getElementById('i-type').value = CATEGORY_LABELS[n.type] || n.type;
+  document.getElementById('i-name').value = n.name;
+  document.getElementById('i-notes').value = n.notes || '';
+}
+document.getElementById('i-name').addEventListener('input', e=>{
+  if(!state.selected) return;
+  const n = state.nodes.find(x=>x.id===state.selected); n.name = e.target.value;
+  // just update label in place
+  const el = document.querySelector(`.wf-node[data-id="${state.selected}"] .label`);
+  if(el) el.textContent = n.name;
+});
+document.getElementById('i-notes').addEventListener('input', e=>{
+  if(!state.selected) return;
+  const n = state.nodes.find(x=>x.id===state.selected); n.notes = e.target.value;
+});
+
+function deleteSelected(){
+  if(!state.selected) return;
+  const id = state.selected;
+  state.edges = state.edges.filter(e=>e.from!==id && e.to!==id);
+  state.nodes = state.nodes.filter(n=>n.id!==id);
+  state.selected = null;
+  selectNode(null);
+  renderCanvas();
+}
+window.addEventListener('keydown', e=>{
+  if((e.key==='Delete' || e.key==='Backspace') && state.selected && document.activeElement.tagName!=='INPUT' && document.activeElement.tagName!=='TEXTAREA'){
+    deleteSelected();
+  }
+});
+
+function clearCanvas(){
+  if(state.nodes.length===0) return;
+  openConfirm('Clear canvas?','This removes all nodes and connections. Your plan notes are kept.', ()=>{
+    state.nodes=[]; state.edges=[]; state.selected=null; selectNode(null); renderCanvas();
+  });
+}
+
+function autoLayout(){
+  if(state.nodes.length===0) return;
+  const depth = {}; state.nodes.forEach(n=>depth[n.id]=0);
+  for(let i=0;i<state.nodes.length;i++){
+    state.edges.forEach(e=>{ depth[e.to] = Math.max(depth[e.to], depth[e.from]+1); });
+  }
+  const cols = {};
+  state.nodes.forEach(n=>{(cols[depth[n.id]] = cols[depth[n.id]]||[]).push(n);});
+  const colW=150, rowH=140, startX=40, startY=60;
+  Object.keys(cols).sort((a,b)=>+a-+b).forEach(d=>{
+    cols[d].forEach((n,i)=>{ n.x = startX + (+d)*colW; n.y = startY + i*rowH; });
+  });
+  renderCanvas();
+}
+
+/* =========================================================
+   RUN SIMULATION
+========================================================= */
+async function runWorkflow(){
+  if(state.running){ stopRun(); return; }
+  if(state.nodes.length===0){ showToast('Add some nodes first!'); return; }
+
+  // topological order
+  const order = topoSort();
+  if(!order){ showToast('⚠ Cycle detected — fix it before running'); return; }
+  const orphans = state.nodes.filter(n=>{
+    const hasIn = state.edges.some(e=>e.to===n.id);
+    const hasOut = state.edges.some(e=>e.from===n.id);
+    return !hasIn && !hasOut;
+  });
+  if(orphans.length){
+    showToast(`⚠ ${orphans.length} disconnected node(s) — connect them first`);
+  }
+
+  state.running = true;
+  const btn = document.getElementById('run-btn');
+  btn.textContent = '■ Stop'; btn.classList.add('stop');
+
+  const panel = document.getElementById('run-panel');
+  const log = document.getElementById('run-log');
+  panel.classList.add('show'); log.innerHTML = '';
+
+  // clear state
+  document.querySelectorAll('.wf-node').forEach(el=>el.classList.remove('executing','done'));
+
+  let totalCost = 0, totalTime = 0;
+
+  for(const nodeId of order){
+    if(!state.running) break;
+    const node = state.nodes.find(n=>n.id===nodeId);
+    if(!node) continue;
+    const el = document.querySelector(`.wf-node[data-id="${nodeId}"]`);
+    el?.classList.add('executing');
+
+    // animate incoming edges
+    const inEdges = state.edges.filter(e=>e.to===nodeId);
+    inEdges.forEach(e=>{
+      const path = svg.querySelector(`path[data-id="${e.id}"]`);
+      if(path) path.classList.add('active');
+      animateTraveler(e);
+    });
+
+    const cost = COSTS[node.type] || COSTS.custom;
+    const simTime = Math.max(400, cost.time * 350); // visual time, not real
+    appendLog(`<span class="step">▶</span> <b>${escapeHTML(node.name)}</b> <span class="arrow">→</span> ${stubOutput(node)} <span style="color:var(--ink-mute)">(${cost.time}s · $${cost.cost.toFixed(3)})</span>`);
+    totalCost += cost.cost; totalTime += cost.time;
+
+    await sleep(simTime);
+    if(!state.running) break;
+    el?.classList.remove('executing'); el?.classList.add('done');
+    inEdges.forEach(e=>{
+      const path = svg.querySelector(`path[data-id="${e.id}"]`);
+      if(path) path.classList.remove('active');
+    });
+  }
+
+  if(state.running){
+    appendLog(`<span class="ok">✓ Done</span> <span class="arrow">·</span> total: <b>$${totalCost.toFixed(3)}</b>, <b>${totalTime.toFixed(1)}s</b>`);
+  }
+  stopRun();
+}
+
+function stopRun(){
+  state.running = false;
+  const btn = document.getElementById('run-btn');
+  btn.textContent = '▶ Run'; btn.classList.remove('stop');
+  document.querySelectorAll('#connections path.active').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.traveler').forEach(t=>t.remove());
+}
+
+function appendLog(html){
+  const log = document.getElementById('run-log');
+  const div = document.createElement('div');
+  div.className = 'run-line';
+  div.innerHTML = html;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+function stubOutput(node){
+  const stubs = {
+    input: 'received trigger',
+    llm:   'returned ~240 tokens',
+    tool:  'fetched data (200 OK)',
+    logic: 'evaluated branch',
+    output: 'delivered ✓',
+    custom: 'completed',
+  };
+  return `<span style="color:var(--ink-soft)">${stubs[node.type]||'completed'}</span>`;
+}
+
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+function topoSort(){
+  const indeg = {}; state.nodes.forEach(n=>indeg[n.id]=0);
+  state.edges.forEach(e=>{indeg[e.to] = (indeg[e.to]||0)+1;});
+  const q = state.nodes.filter(n=>!indeg[n.id]).map(n=>n.id);
+  const out = [];
+  while(q.length){
+    const id = q.shift(); out.push(id);
+    state.edges.filter(e=>e.from===id).forEach(e=>{
+      indeg[e.to]--; if(indeg[e.to]===0) q.push(e.to);
+    });
+  }
+  return out.length === state.nodes.length ? out : null;
+}
+
+function animateTraveler(edge){
+  const path = svg.querySelector(`path[data-id="${edge.id}"]`);
+  if(!path) return;
+  const len = path.getTotalLength();
+  const t = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  t.setAttribute('r','4'); t.setAttribute('class','traveler');
+  svg.appendChild(t);
+  let start = null;
+  const dur = 600;
+  function step(ts){
+    if(!start) start = ts;
+    const p = Math.min(1,(ts-start)/dur);
+    const pt = path.getPointAtLength(p*len);
+    t.setAttribute('cx',pt.x); t.setAttribute('cy',pt.y);
+    if(p<1 && state.running) requestAnimationFrame(step);
+    else t.remove();
+  }
+  requestAnimationFrame(step);
+}
+
+/* =========================================================
+   CHALLENGES
+========================================================= */
+const CHALLENGES = [
+  {
+    id:'study',
+    emoji:'📚',
+    name:'Study Buddy',
+    prompt:"It's the night before your chem test and the PDF is 30 pages. Build a workflow that reads the file, summarizes the key concepts in plain English, then writes 5 quiz questions you can use to test yourself.",
+    requires: { input:1, tool:1, llm:2, output:1 },
+    hint: 'Hint: file upload → PDF reader (tool) → 2 LLM steps (one to summarize, one to write the quiz) → show it in the app.'
+  },
+  {
+    id:'tiktok',
+    emoji:'📱',
+    name:'TikTok Trend Finder',
+    prompt:"Every morning, scan what's trending on TikTok, pick the 3 trends that match your niche (e.g. fitness, gaming, fashion), and draft a 15-second script for each one — ready to film.",
+    requires: { input:1, tool:1, llm:2, output:1 },
+    hint: 'Hint: scheduled trigger → web search for trends → LLM to filter by niche → LLM to write scripts → show or email.'
+  },
+  {
+    id:'caption',
+    emoji:'✨',
+    name:'Caption Generator',
+    prompt:"Upload a photo and the workflow describes what's in it, then writes 3 caption options in different tones: funny, aesthetic, and chaotic. You pick the one you actually post.",
+    requires: { input:1, llm:3, output:1 },
+    hint: 'Hint: image upload → 3 separate LLM steps (one per tone — they run in parallel from the same input) → show all 3 in the app.'
+  },
+  {
+    id:'newsletter',
+    emoji:'☀️',
+    name:'Morning News Brief',
+    prompt:"Every weekday at 7 AM, grab the top 3 AI/tech headlines, write a casual summary (no corporate-speak), and send it to your phone so you sound informed in first period.",
+    requires: { input:1, tool:1, llm:1, output:1 },
+    hint: 'Hint: scheduled trigger → web search → LLM to summarize with personality → send as message or email.'
+  },
+];
+
+function openChallengeModal(){
+  document.getElementById('modal-title').textContent = 'Pick a challenge';
+  document.getElementById('modal-text').textContent = 'Build a workflow that solves one of these. The builder will check if it has all the right pieces.';
+  document.getElementById('modal-body').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+      ${CHALLENGES.map(c=>`
+        <button class="example-pill" style="background:var(--panel-2)" onclick="startChallenge('${c.id}')">
+          <span class="emoji">${c.emoji || '🎯'}</span>
+          <div class="meta">
+            <div class="name">${c.name}</div>
+            <div class="desc">${c.prompt.substring(0,100)}…</div>
+          </div>
+        </button>
+      `).join('')}
+    </div>
+  `;
+  document.getElementById('modal-bg').classList.add('show');
+  // hide default confirm
+  const c = document.getElementById('modal-confirm');
+  const clone = c.cloneNode(true); clone.style.display='none';
+  c.parentNode.replaceChild(clone, c);
+}
+
+function startChallenge(id){
+  const ch = CHALLENGES.find(c=>c.id===id);
+  if(!ch) return;
+  state.challenge = ch;
+  state.nodes = []; state.edges = []; state.selected = null;
+  document.getElementById('challenge-bar').style.display='flex';
+  document.getElementById('challenge-name').textContent = ch.name;
+  document.getElementById('challenge-prompt').textContent = ch.prompt;
+  closeModal();
+  goToStage('build');
+  renderCanvas();
+  showToast('Challenge loaded! Build your solution.');
+}
+
+function clearChallenge(){
+  state.challenge = null;
+  document.getElementById('challenge-bar').style.display='none';
+}
+
+function checkChallenge(){
+  if(!state.challenge) return;
+  const req = state.challenge.requires;
+  const counts = {input:0,llm:0,tool:0,logic:0,output:0,custom:0};
+  state.nodes.forEach(n=>counts[n.type]++);
+
+  const failures = [];
+  Object.entries(req).forEach(([k,v])=>{
+    if((counts[k]||0) < v) failures.push(`needs at least ${v} ${CATEGORY_LABELS[k]} node(s) (you have ${counts[k]||0})`);
+  });
+  // Connection check
+  const connected = state.edges.length >= state.nodes.length - 1;
+  if(!connected) failures.push('nodes aren\'t all connected');
+
+  if(failures.length===0){
+    openConfirm('🎉 Challenge passed!', `Nice work! Your workflow has all the required pieces for "${state.challenge.name}". You can keep iterating or try a new challenge.`, ()=>{});
+    document.getElementById('modal-confirm').textContent = 'Got it';
+  } else {
+    openConfirm('Not quite — keep going!', `Your workflow ${failures.join('; ')}.\n\n${state.challenge.hint}`, ()=>{});
+    document.getElementById('modal-confirm').textContent = 'OK';
+  }
+}
+
+/* =========================================================
+   MODAL
+========================================================= */
+function openConfirm(title, text, onConfirm){
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-text').textContent = text;
+  document.getElementById('modal-body').innerHTML = '';
+  document.getElementById('modal-bg').classList.add('show');
+  const c = document.getElementById('modal-confirm');
+  const clone = c.cloneNode(true); clone.style.display=''; clone.textContent='OK';
+  c.parentNode.replaceChild(clone, c);
+  clone.addEventListener('click', ()=>{ onConfirm && onConfirm(); closeModal(); });
+}
+function closeModal(){ document.getElementById('modal-bg').classList.remove('show'); }
+document.getElementById('modal-bg').addEventListener('click', e=>{ if(e.target.id==='modal-bg') closeModal(); });
+
+/* =========================================================
+   SHIP
+========================================================= */
+function renderShip(){
+  const frame = document.getElementById('ship-canvas-frame');
+  frame.innerHTML = '';
+  if(state.nodes.length===0){
+    frame.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--ink-mute);font-size:13px;text-align:center;padding:20px">No nodes yet — go back to Build!</div>';
+  } else {
+    // Compute bounding box of nodes (canvas-space)
+    let minX=Infinity, minY=Infinity, maxX=-Infinity, maxY=-Infinity;
+    state.nodes.forEach(n=>{
+      const el = document.querySelector(`.wf-node[data-id="${n.id}"]`);
+      const w = el ? el.offsetWidth : 96;
+      const h = el ? el.offsetHeight : 120;
+      minX = Math.min(minX, n.x); minY = Math.min(minY, n.y);
+      maxX = Math.max(maxX, n.x + w); maxY = Math.max(maxY, n.y + h);
+    });
+    const pad = 30;
+    const bbW = (maxX - minX) + pad*2;
+    const bbH = (maxY - minY) + pad*2;
+    const frameW = 600, frameH = 420; // approximate frame size; CSS bounds it anyway
+    const scale = Math.min(1, Math.min(frameW / bbW, frameH / bbH));
+
+    const clone = canvas.cloneNode(true);
+    clone.style.pointerEvents='none';
+    clone.querySelector('.canvas-empty')?.remove();
+    clone.querySelector('.trash')?.remove();
+    clone.querySelector('.run-panel')?.remove();
+    // Override transformed viewport inside the clone to "fit" view
+    const vp = clone.querySelector('.canvas-viewport');
+    if(vp){
+      vp.style.transform = `translate(${-minX*scale + pad}px, ${-minY*scale + pad}px) scale(${scale})`;
+      vp.style.backgroundSize = (18*scale)+'px '+(18*scale)+'px';
+    }
+    frame.appendChild(clone);
+  }
+
+  const pi = document.getElementById('plan-input').value.trim();
+  const ps = document.getElementById('plan-subtasks').value.trim();
+  const pt = document.getElementById('plan-tools').value.trim();
+  const po = document.getElementById('plan-output').value.trim();
+  const sum = document.getElementById('plan-summary');
+  if(!pi && !ps && !pt && !po){
+    sum.innerHTML = '<em style="color:var(--ink-mute)">No plan notes yet. Go back to Step 1 to add some!</em>';
+  } else {
+    sum.innerHTML = `
+      ${pi?`<div><strong style="color:var(--ink)">Input</strong> &nbsp; ${escapeHTML(pi)}</div>`:''}
+      ${ps?`<div style="margin-top:10px"><strong style="color:var(--ink)">Sub-tasks</strong><br><span style="white-space:pre-line">${escapeHTML(ps)}</span></div>`:''}
+      ${pt?`<div style="margin-top:10px"><strong style="color:var(--ink)">Tools</strong> &nbsp; ${escapeHTML(pt)}</div>`:''}
+      ${po?`<div style="margin-top:10px"><strong style="color:var(--ink)">Output</strong> &nbsp; ${escapeHTML(po)}</div>`:''}
+    `;
+  }
+  renderChecks();
+}
+
+function renderChecks(){
+  const types = state.nodes.map(n=>n.type);
+  let totalCost=0, totalTime=0;
+  state.nodes.forEach(n=>{ const c = COSTS[n.type]||COSTS.custom; totalCost+=c.cost; totalTime+=c.time; });
+
+  const checks = [
+    { pass: types.includes('input'), title:'Has an input', desc:'Every workflow needs a trigger.' },
+    { pass: types.includes('llm')||types.includes('tool'), title:'Has at least one AI step or tool', desc:'Otherwise nothing happens between input and output.' },
+    { pass: types.includes('output'), title:'Has an output', desc:'Where does the result go?' },
+    { pass: state.edges.length >= Math.max(1,state.nodes.length-1) && state.nodes.length>=2, title:'Nodes are connected', desc:'No orphans — every node should be wired in.' },
+    { pass: types.filter(t=>t==='llm').length>=1, title:'Uses at least one LLM step', desc:'Most useful AI workflows need reasoning.' },
+    { pass: totalCost < 0.10, title:`Cost-efficient (~$${totalCost.toFixed(3)} per run)`, desc:'LLM steps are the expensive part. Could you replace any with a tool?' },
+  ];
+
+  document.getElementById('checks').innerHTML = checks.map(c=>`
+    <div class="check-item ${c.pass?'pass':'fail'}">
+      <div class="check-icon">${c.pass?'✅':'⚠️'}</div>
+      <div class="check-text"><strong>${c.title}</strong><span>${c.desc}</span></div>
+    </div>
+  `).join('');
+}
+
+/* =========================================================
+   EXPORT
+========================================================= */
+function exportJSON(){
+  const plan = {
+    input: document.getElementById('plan-input').value,
+    subtasks: document.getElementById('plan-subtasks').value,
+    tools: document.getElementById('plan-tools').value,
+    output: document.getElementById('plan-output').value,
+  };
+  const data = {plan, nodes:state.nodes, edges:state.edges, exportedAt:new Date().toISOString()};
+  const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='my-ai-workflow.json'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportPNG(){
+  if(state.nodes.length===0){ showToast('Add some nodes first!'); return; }
+  const pad = 60;
+  let minX=Infinity, minY=Infinity, maxX=-Infinity, maxY=-Infinity;
+  state.nodes.forEach(n=>{
+    const el = document.querySelector(`.wf-node[data-id="${n.id}"]`);
+    const w = el ? el.offsetWidth : 96;
+    const h = el ? el.offsetHeight : 120;
+    minX=Math.min(minX, n.x); minY=Math.min(minY, n.y);
+    maxX=Math.max(maxX, n.x + w); maxY=Math.max(maxY, n.y + h);
+  });
+  const w = Math.ceil(maxX-minX+pad*2);
+  const h = Math.ceil(maxY-minY+pad*2);
+  const offX = -minX+pad, offY = -minY+pad;
+
+  const COLOR = {input:'#ff6d5a', llm:'#a78bfa', tool:'#34d399', logic:'#fbbf24', output:'#60a5fa', custom:'#f472b6'};
+
+  let svgOut = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+    <defs>
+      <pattern id="dots" width="18" height="18" patternUnits="userSpaceOnUse">
+        <circle cx="1" cy="1" r="1" fill="#2f333d"/>
+      </pattern>
+    </defs>
+    <rect width="${w}" height="${h}" fill="#15161b"/>
+    <rect width="${w}" height="${h}" fill="url(#dots)"/>`;
+
+  // edges — use smart port pairs
+  state.edges.forEach(e=>{
+    const fromNode = state.nodes.find(n=>n.id===e.from);
+    const toNode   = state.nodes.find(n=>n.id===e.to);
+    if(!fromNode || !toNode) return;
+    const [fp, tp] = bestPortPair(fromNode, toNode);
+    const x1 = fp.x + offX, y1 = fp.y + offY;
+    const x2 = tp.x + offX, y2 = tp.y + offY;
+    const dist = Math.hypot(x2-x1, y2-y1);
+    const mag = Math.max(40, Math.min(120, dist * 0.4));
+    const [c1dx, c1dy] = controlOffset(fp.side, mag);
+    const [c2dx, c2dy] = controlOffset(tp.side, mag);
+    const c1x = x1 + c1dx, c1y = y1 + c1dy;
+    const c2x = x2 + c2dx, c2y = y2 + c2dy;
+    svgOut += `<path d="M ${x1} ${y1} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${x2} ${y2}" stroke="#8a8f9c" stroke-width="2" fill="none"/>`;
+    const angle = Math.atan2(y2-c2y, x2-c2x);
+    const size = 6;
+    svgOut += `<polygon points="${x2},${y2} ${x2-size*Math.cos(angle-.5)},${y2-size*Math.sin(angle-.5)} ${x2-size*Math.cos(angle+.5)},${y2-size*Math.sin(angle+.5)}" fill="#8a8f9c"/>`;
+  });
+
+  // nodes
+  state.nodes.forEach(n=>{
+    const el = document.querySelector(`.wf-node[data-id="${n.id}"]`);
+    const w2 = el ? el.offsetWidth : 96;
+    const h2 = el ? el.offsetHeight : 120;
+    const x = n.x + offX, y = n.y + offY;
+    const bodyH = 80;
+    svgOut += `<rect x="${x}" y="${y}" width="${w2}" height="${h2}" rx="8" fill="#2a2d36" stroke="#3a3f4b" stroke-width="1"/>`;
+    svgOut += `<rect x="${x}" y="${y}" width="${w2}" height="${bodyH}" rx="7" fill="${COLOR[n.type]||'#888'}" fill-opacity="0.18"/>`;
+    svgOut += `<text x="${x+w2/2}" y="${y+bodyH/2+12}" text-anchor="middle" font-size="30">${escapeXML(n.icon||'•')}</text>`;
+    const lines = wrapText(n.name,14);
+    lines.forEach((ln,i)=>{
+      svgOut += `<text x="${x+w2/2}" y="${y+bodyH+18+i*13}" text-anchor="middle" font-family="Geist,system-ui,sans-serif" font-size="11" font-weight="600" fill="#f5f6f8">${escapeXML(ln)}</text>`;
+    });
+    svgOut += `<text x="${x+w2/2}" y="${y+h2-6}" text-anchor="middle" font-family="Geist Mono,ui-monospace,monospace" font-size="9" fill="#8a8f9c">${CATEGORY_LABELS[n.type]||n.type}</text>`;
+    const cost = COSTS[n.type]||COSTS.custom;
+    const badge = (cost.cost?'$'+cost.cost.toFixed(3):'free')+' · '+cost.time+'s';
+    svgOut += `<rect x="${x+w2-50}" y="${y+h2-6}" width="48" height="14" rx="7" fill="#353945" stroke="#3a3f4b"/>`;
+    svgOut += `<text x="${x+w2-26}" y="${y+h2+4}" text-anchor="middle" font-family="Geist Mono,ui-monospace,monospace" font-size="8" fill="#c4c7d1">${badge}</text>`;
+  });
+
+  svgOut += `</svg>`;
+
+  const blob = new Blob([svgOut],{type:'image/svg+xml;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const img = new Image();
+  img.onload = ()=>{
+    const c = document.createElement('canvas');
+    const scale=2; c.width=w*scale; c.height=h*scale;
+    const ctx = c.getContext('2d'); ctx.scale(scale,scale); ctx.drawImage(img,0,0);
+    c.toBlob(b=>{
+      const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='my-ai-workflow.png'; a.click();
+      URL.revokeObjectURL(a.href);
+    },'image/png');
+    URL.revokeObjectURL(url);
+  };
+  img.onerror = ()=>{ showToast('PNG export failed, try JSON'); URL.revokeObjectURL(url); };
+  img.src = url;
+}
+
+function wrapText(text,maxChars){
+  const words = text.split(' '); const lines=[]; let cur='';
+  words.forEach(w=>{ if((cur+' '+w).trim().length <= maxChars){cur=(cur+' '+w).trim();} else {if(cur)lines.push(cur); cur=w;} });
+  if(cur) lines.push(cur);
+  return lines.slice(0,2);
+}
+function escapeXML(s){return (s||'').replace(/[<>&"']/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&apos;'}[c]));}
+
+/* INIT */
+applyView();
+renderCanvas();
+</script>
+</body>
+</html>
