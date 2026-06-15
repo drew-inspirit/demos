@@ -282,7 +282,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       <h2>Each song is a point, and it finds the closest</h2>
     </div>
     <div class="card">
-      <div class="card-label">Each song placed by its sound. ⭐ is the centre of what you liked</div>
+      <div class="card-label">Each song placed by its features (energy, tempo). ⭐ is the centre of what you liked</div>
       <svg id="sp4-scatter" width="100%" height="190" viewBox="0 0 300 190" style="display:block"></svg>
       <div style="display:flex;gap:12px;justify-content:center;font-size:.72rem;color:var(--text2);margin:5px 0 12px;flex-wrap:wrap">
         <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--sp);margin-right:4px;vertical-align:middle"></span>You liked</span>
@@ -292,7 +292,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       <div class="card-label">New songs, ranked by closeness to your likes</div>
       <div id="sp4-matches"></div>
     </div>
-    <div class="key-idea">The model doesn't "listen." It sees only <strong>numbers</strong>, and picks new songs <strong>closest</strong> to the ones you liked.</div>
+    <div class="key-idea">The model doesn't "listen." It reads each song's <strong>features</strong> (characteristics like energy and tempo) as numbers, then picks new songs <strong>closest</strong> to the ones you liked.</div>
     <div class="step-nav">
       <button class="nav-btn back" onclick="spStep(1)">← Back</button>
       <div class="progress-dots" id="sp-dots"></div>
@@ -346,7 +346,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     </div>
     <div class="def-box def-sp"><span>Train on <em>labelled</em> examples → learn the pattern → predict the label for new data.</span></div>
     <div class="recap-point"><span class="ri">🏷️</span><span>It needs labelled data: examples with known answers</span></div>
-    <div class="recap-point"><span class="ri">🧠</span><span>It learns the pattern linking a song's numbers to your reaction</span></div>
+    <div class="recap-point"><span class="ri">🧠</span><span>It learns the pattern between a song's <strong>features</strong> (its characteristics) and your <strong>labels</strong> (👍 or 👎)</span></div>
     <div class="recap-point"><span class="ri">🎯</span><span>It applies that pattern to predict new, unseen songs</span></div>
     <div class="qcheck" style="margin-top:12px"><strong>💬 Quick check: Why can't Spotify predict your taste if you've never liked or skipped anything?</strong><details><summary>Show answer</summary><em>No training data. Without labelled examples, there's no pattern to learn from.</em></details></div>
     <div class="step-nav">

@@ -292,7 +292,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
         </div>
       </div>
     </div>
-    <div class="key-idea">The model groups users purely by <strong>similar behaviour</strong>. Three groups, but no idea yet what they are.</div>
+    <div class="key-idea">The model groups users purely by <strong>similar behaviour</strong>. These groups are called <strong>clusters</strong>: three of them, but no idea yet what they are.</div>
     <div class="step-nav">
       <button class="nav-btn back" onclick="igStep(1)">← Back</button>
       <div class="progress-dots" id="ig-dots"></div>
@@ -344,9 +344,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       <div class="step-counter">Step 5 of 5</div>
       <h2>What is unsupervised learning?</h2>
     </div>
-    <div class="def-box def-ig"><span>Find hidden structure in <em>unlabelled</em> data: the model groups by similarity, then humans interpret the groups.</span></div>
+    <div class="def-box def-ig"><span>Find hidden structure in <em>unlabelled</em> data: the model sorts it into <em>clusters</em> by similarity, then humans interpret them.</span></div>
     <div class="recap-point"><span class="ri">🚫</span><span>No labels: the model gets raw behaviour with no answers</span></div>
-    <div class="recap-point"><span class="ri">🔍</span><span>It finds groups based on similarity, across users <em>and</em> posts</span></div>
+    <div class="recap-point"><span class="ri">🔍</span><span>It finds <strong>clusters</strong> (groups) by similarity, across users <em>and</em> posts</span></div>
     <div class="recap-point"><span class="ri">🏷️</span><span>People label the groups afterward, a separate human step</span></div>
     <div class="qcheck" style="margin-top:12px"><strong>💬 Quick check: The model found 3 groups but no names. Did it do "unsupervised learning"?</strong><details><summary>Show answer</summary><em>Yes. Finding the groups is the unsupervised part. Naming them "fitness" or "gaming" is a human label added on top.</em></details></div>
     <div class="step-nav">
