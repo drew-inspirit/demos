@@ -210,7 +210,25 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .qcheck strong{color:#92400e;display:block;margin-bottom:4px}
 .qcheck em{color:#92400e}
 
-@media(max-width:480px){.cell{width:44px;height:44px;font-size:1.1rem}.tab-btn{padding:8px 12px}}
+@media(max-width:480px){.cell{width:44px;height:44px;font-size:1.1rem}.tab-btn{padding:8px 12px}.dpad{grid-template-columns:repeat(3,44px)}}
+
+/* Fog-of-war maze */
+.cell-fog{background:#cfc9bf;border-color:#bdb6aa;color:#a59e92;font-size:1rem}
+.dpad{display:grid;grid-template-columns:repeat(3,52px);grid-template-rows:repeat(2,46px);gap:6px;justify-content:center;margin:14px 0 4px}
+.dbtn{border-radius:10px;border:1.5px solid var(--gm);background:var(--gm-light);color:#1e3a8a;font-size:1.15rem;font-weight:700;cursor:pointer;transition:all .12s;font-family:'DM Sans',sans-serif}
+.dbtn:hover{background:var(--gm-mid)}
+.dbtn:active{transform:scale(.93)}
+.dbtn.up{grid-column:2;grid-row:1}
+.dbtn.left{grid-column:1;grid-row:2}
+.dbtn.down{grid-column:2;grid-row:2}
+.dbtn.right{grid-column:3;grid-row:2}
+.game-stats{display:flex;gap:8px;margin:12px 0}
+.gstat{flex:1;padding:10px 8px;border-radius:10px;text-align:center;border:1px solid var(--border);background:var(--bg)}
+.gstat .gv{font-family:'Fraunces',serif;font-size:1.5rem;font-weight:700;line-height:1}
+.gstat .gl{font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-top:4px}
+.game-msg{padding:10px 12px;border-radius:10px;font-size:.83rem;text-align:center;border:1px solid var(--border);background:var(--bg);color:var(--text2);min-height:40px;display:flex;align-items:center;justify-content:center;line-height:1.4}
+.game-msg.bad{background:var(--red-light);border-color:#fca5a5;color:#991b1b;font-weight:600}
+.game-msg.win{background:var(--green-light);border-color:var(--green);color:#065f46;font-weight:700}
 
 .panel{display:block!important}</style>
 </head>
@@ -227,16 +245,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="step-header">
       <div class="step-lbl gm-lbl">🎮 Reinforcement · Gaming AI</div>
       <div class="step-counter">Step 1 of 6</div>
-      <h2>No map. No rules. Zero knowledge.</h2>
+      <h2>No map. No rules. Total fog.</h2>
     </div>
     <div class="card">
-      <div class="card-label">Trial 1 — first random move (right)</div>
+      <div class="card-label">What the agent sees — everything is hidden</div>
       <div class="maze-wrap"><div class="maze" id="gm1-maze"></div></div>
       <div style="padding:10px 14px;border-radius:10px;background:var(--gm-light);border:1px solid var(--gm-mid);font-size:.83rem;color:#1e3a8a;display:flex;align-items:center;gap:10px">
-        🐭 starts at 📍 and moves right. Nothing happened — the AI records this as neutral.
+        🐭 starts at the corner. Hidden somewhere: 🪤 traps and 🧀 cheese. The only way to learn is to move and see what happens.
       </div>
     </div>
-    <div class="key-idea">The agent starts with complete ignorance and learns only by <strong>trying things</strong>.</div>
+    <div class="key-idea">Like fog-of-war in a game, the agent can't see the maze. It learns <strong>only by trying things</strong>.</div>
     <div class="step-nav">
       <button class="nav-btn back" disabled>← Back</button>
       <div class="progress-dots" id="gm-dots"></div>
@@ -248,17 +266,26 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="step-header">
       <div class="step-lbl gm-lbl">🎮 Reinforcement · Gaming AI</div>
       <div class="step-counter">Step 2 of 6</div>
-      <h2>It hits a trap — and gets −5</h2>
+      <h2>Your turn — find the cheese 🧀</h2>
     </div>
     <div class="card">
-      <div class="card-label">Went down from start — hit a mousetrap! 🪤</div>
+      <div class="card-label">Move with the arrows (or your keyboard). Hidden cells stay grey.</div>
       <div class="maze-wrap"><div class="maze" id="gm2-maze"></div></div>
-      <div class="reward-big neg">
-        <div class="rval">−5</div>
-        <div class="rdesc">Mousetrap! 🪤<br><span style="font-size:.75rem;opacity:.8">Path marked as dangerous</span></div>
+      <div class="dpad">
+        <button class="dbtn up" onclick="gMove(-1,0)">↑</button>
+        <button class="dbtn left" onclick="gMove(0,-1)">←</button>
+        <button class="dbtn down" onclick="gMove(1,0)">↓</button>
+        <button class="dbtn right" onclick="gMove(0,1)">→</button>
       </div>
+      <div class="game-stats">
+        <div class="gstat"><div class="gv" id="gs-score" style="color:var(--gm)">0</div><div class="gl">Reward</div></div>
+        <div class="gstat"><div class="gv" id="gs-attempts" style="color:var(--text)">1</div><div class="gl">Attempts</div></div>
+        <div class="gstat"><div class="gv" id="gs-traps" style="color:var(--red)">0</div><div class="gl">Traps found</div></div>
+      </div>
+      <div class="game-msg" id="gm2-msg">Pick a direction to take your first step.</div>
+      <button class="nav-btn back" onclick="gameReset(true)" style="margin-top:8px;padding:8px 16px;font-size:.78rem">↺ Start over</button>
     </div>
-    <div class="key-idea">A <strong>punishment signal</strong> is just as useful as a reward — the AI now knows to avoid going down from start.</div>
+    <div class="key-idea">Each trap costs you <strong>−5</strong>; the cheese pays <strong>+10</strong>. Hit a trap and you're sent back — but now you <em>know</em> where it is.</div>
     <div class="step-nav">
       <button class="nav-btn back" onclick="gmStep(1)">← Back</button>
       <div class="progress-dots" id="gm-dots"></div>
@@ -270,15 +297,20 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="step-header">
       <div class="step-lbl gm-lbl">🎮 Reinforcement · Gaming AI</div>
       <div class="step-counter">Step 3 of 6</div>
-      <h2>Next try — it avoids the known trap</h2>
+      <h2>That was reinforcement learning</h2>
     </div>
     <div class="card">
-      <div class="card-label">Trial 2 — going right instead</div>
-      <div class="maze-wrap"><div class="maze" id="gm3-maze"></div></div>
-      <div class="trial-row"><span class="trial-num">Trial 1</span><span>Down → mousetrap 💥</span><span style="font-weight:700;color:#991b1b;margin-left:auto">−5</span></div>
-      <div class="trial-row" style="border-color:#93c5fd;background:var(--gm-light)"><span class="trial-num">Trial 2</span><span>Right → right → exploring…</span><span style="font-weight:700;color:var(--gm);margin-left:auto">ongoing</span></div>
+      <div class="card-label">What you just did, in numbers</div>
+      <div class="game-stats">
+        <div class="gstat"><div class="gv" id="gs3-attempts" style="color:var(--text)">–</div><div class="gl">Attempts</div></div>
+        <div class="gstat"><div class="gv" id="gs3-traps" style="color:var(--red)">–</div><div class="gl">Traps learned</div></div>
+        <div class="gstat"><div class="gv" id="gs3-score" style="color:var(--gm)">–</div><div class="gl">Final reward</div></div>
+      </div>
+      <div class="recap-point"><span class="ri">🎲</span>You started blind and just <strong>tried</strong> moves</div>
+      <div class="recap-point"><span class="ri">🪤</span>A trap gave a <strong>punishment</strong> (−5) — a signal to avoid it</div>
+      <div class="recap-point"><span class="ri">🧀</span>The cheese gave a <strong>reward</strong> (+10) — a signal to repeat what worked</div>
     </div>
-    <div class="key-idea">Already smarter after just one lesson — that's <strong>learning from feedback</strong>.</div>
+    <div class="key-idea">No one told you the path. You learned it from <strong>rewards and punishments</strong> — exactly how an RL agent learns.</div>
     <div class="step-nav">
       <button class="nav-btn back" onclick="gmStep(2)">← Back</button>
       <div class="progress-dots" id="gm-dots"></div>
@@ -290,18 +322,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="step-header">
       <div class="step-lbl gm-lbl">🎮 Reinforcement · Gaming AI</div>
       <div class="step-counter">Step 4 of 6</div>
-      <h2>After many tries — a value map emerges</h2>
+      <h2>The more it tries, the better it gets</h2>
     </div>
     <div class="card">
-      <div class="card-label">Q-values from start — which direction is safest?</div>
+      <div class="card-label">From the start — which first move did it learn to trust?</div>
       <div id="gm4-q"></div>
       <div style="margin-top:13px">
-        <div class="card-label" style="margin-bottom:7px">Reward improving over 100 trials</div>
+        <div class="card-label" style="margin-bottom:7px">Reward improving over 100 attempts</div>
         <svg id="gm4-curve" width="100%" height="75" viewBox="0 0 300 75" preserveAspectRatio="none" style="display:block"></svg>
-        
+
       </div>
     </div>
-    <div class="key-idea">High Q = good move. Low Q = danger. These values were <strong>never programmed in</strong> — discovered through trial and error.</div>
+    <div class="key-idea">Good moves earn a high score, risky moves a low one. None of this was <strong>programmed in</strong> — it was all discovered through trial and error.</div>
     <div class="step-nav">
       <button class="nav-btn back" onclick="gmStep(3)">← Back</button>
       <div class="progress-dots" id="gm-dots"></div>
@@ -327,7 +359,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
         <button class="nav-btn back" id="gm5-reset" onclick="resetFinalAI()" style="display:none;padding:9px 18px;font-size:.78rem">↺ Replay</button>
       </div>
     </div>
-    <div class="key-idea">Following learned Q-values, the AI picks the best move at every step — no rules ever written.</div>
+    <div class="key-idea">Using what it learned, the AI now picks the best move at every step — no rules ever written.</div>
     <div class="step-nav">
       <button class="nav-btn back" onclick="gmStep(4)">← Back</button>
       <div class="progress-dots" id="gm-dots"></div>
@@ -434,13 +466,98 @@ function buildRewardCurve(){
 }
 var var_gm='#2563eb';
 
-var cGm=1;
+/* ══ FOG-OF-WAR GAME ══════════════════════════════ */
+function buildFogPreview(id){
+  var m=document.getElementById(id);if(!m)return;
+  m.style.gridTemplateColumns='repeat('+COLS+',52px)';
+  var h='';
+  for(var r=0;r<ROWS;r++)for(var c=0;c<COLS;c++){
+    var cls='cell ',ic='';
+    if(r===0&&c===0){cls+='cell-player';ic='🐭';}
+    else{cls+='cell-fog';ic='❓';}
+    h+='<div class="'+cls+'">'+ic+'</div>';
+  }
+  m.innerHTML=h;
+}
+
+var G=null;
+function gameInit(){
+  G={player:[0,0],known:{'0,0':1},visited:{'0,0':1},traps:{},score:0,attempts:1,steps:0,trapsFound:0,won:false,flash:null};
+}
+function renderFog(){
+  var m=document.getElementById('gm2-maze');if(!m)return;
+  m.style.gridTemplateColumns='repeat('+COLS+',52px)';
+  var h='';
+  for(var r=0;r<ROWS;r++)for(var c=0;c<COLS;c++){
+    var key=r+','+c,cls='cell ',ic='';
+    var isP=G.player[0]===r&&G.player[1]===c;
+    var isFlash=G.flash&&G.flash[0]===r&&G.flash[1]===c;
+    if(isFlash){cls+='cell-bad';ic='💥';}
+    else if(isP){cls+='cell-player';ic='🐭';}
+    else if(!G.known[key]){cls+='cell-fog';ic='❓';}
+    else if(isWall(r,c)){cls+='cell-wall';}
+    else if(isGoal(r,c)){cls+='cell-goal';ic='🧀';}
+    else if(isTrap(r,c)){cls+='cell-trap';ic='🪤';}
+    else if(r===0&&c===0){cls+='cell-visited';ic='📍';}
+    else{cls+='cell-visited';ic='·';}
+    h+='<div class="'+cls+'">'+ic+'</div>';
+  }
+  m.innerHTML=h;
+}
+function setMsg(t,cls){var el=document.getElementById('gm2-msg');if(!el)return;el.className='game-msg'+(cls?' '+cls:'');el.innerHTML=t;}
+function updateGameUI(){
+  var s=document.getElementById('gs-score');if(s)s.textContent=(G.score>0?'+':'')+G.score;
+  var a=document.getElementById('gs-attempts');if(a)a.textContent=G.attempts;
+  var t=document.getElementById('gs-traps');if(t)t.textContent=G.trapsFound;
+}
+function gameReset(){
+  gameInit();renderFog();updateGameUI();
+  setMsg('Fresh start. Pick a direction.','');
+}
+function gMove(dr,dc){
+  if(!G)gameInit();
+  if(G.won)return;
+  var nr=G.player[0]+dr,nc=G.player[1]+dc,key=nr+','+nc;
+  if(nr<0||nr>=ROWS||nc<0||nc>=COLS){setMsg('Edge of the maze — can\'t go that way.','');return;}
+  if(isWall(nr,nc)){G.known[key]=1;renderFog();setMsg('🧱 Bumped a wall — that way is blocked.','');return;}
+  G.steps++;G.player=[nr,nc];G.known[key]=1;G.visited[key]=1;
+  if(isTrap(nr,nc)){
+    G.score-=5;if(!G.traps[key]){G.traps[key]=1;G.trapsFound++;}
+    G.flash=[nr,nc];renderFog();updateGameUI();
+    setMsg('🪤 Trap! −5. Sent back to start — but now you know it\'s there.','bad');
+    setTimeout(function(){G.flash=null;G.player=[0,0];G.attempts++;renderFog();updateGameUI();},700);
+    return;
+  }
+  if(isGoal(nr,nc)){
+    G.score+=10;G.won=true;renderFog();updateGameUI();
+    setMsg('🧀 Cheese! +10 — solved in '+G.attempts+' attempt'+(G.attempts>1?'s':'')+'. Hit Next →','win');
+    return;
+  }
+  renderFog();updateGameUI();setMsg('Safe — a new cell explored. Keep going…','');
+}
+
+document.addEventListener('keydown',function(e){
+  if(cGm!==2)return;
+  var handled=true;
+  if(e.key==='ArrowUp')gMove(-1,0);
+  else if(e.key==='ArrowDown')gMove(1,0);
+  else if(e.key==='ArrowLeft')gMove(0,-1);
+  else if(e.key==='ArrowRight')gMove(0,1);
+  else handled=false;
+  if(handled)e.preventDefault();
+});
+
 var cGm=1;
 function gmStep(n){
   cGm=n;showStep('gm',n,6);
-  if(n===1)buildMaze('gm1-maze',[0,1],[[0,0]],[],[]);
-  if(n===2)buildMaze('gm2-maze',[1,0],[[0,0]],[],[1,0]);
-  if(n===3)buildMaze('gm3-maze',[1,2],[[0,0],[0,1],[0,2]],[],[]);
+  if(n===1)buildFogPreview('gm1-maze');
+  if(n===2){if(!G)gameInit();renderFog();updateGameUI();}
+  if(n===3){
+    var a=document.getElementById('gs3-attempts'),t=document.getElementById('gs3-traps'),s=document.getElementById('gs3-score');
+    if(a)a.textContent=G?G.attempts:'–';
+    if(t)t.textContent=G?G.trapsFound:'–';
+    if(s)s.textContent=G?((G.score>0?'+':'')+G.score):'–';
+  }
   if(n===4){buildQTable('gm4-q');setTimeout(buildRewardCurve,80);}
   if(n===5)buildMaze('gm5-maze',[0,0],[],[],[]);
 }

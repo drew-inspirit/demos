@@ -212,6 +212,24 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 
 @media(max-width:480px){.cell{width:44px;height:44px;font-size:1.1rem}.tab-btn{padding:8px 12px}}
 
+/* Interactive rating rows */
+.rate-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:var(--bg);margin-bottom:7px;transition:all .2s}
+.rate-row.liked{border-color:var(--sp);background:var(--sp-light)}
+.rate-row.skipped{border-color:#fca5a5;background:var(--red-light)}
+.rate-art{width:38px;height:38px;border-radius:8px;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:1.15rem;flex-shrink:0}
+.rate-meta{flex:1;min-width:0}
+.rate-meta .track-name{font-size:.86rem}
+.thumbs{display:flex;gap:6px;flex-shrink:0}
+.thumb{width:40px;height:34px;border-radius:9px;border:1.5px solid var(--border2);background:var(--surface);cursor:pointer;font-size:1rem;transition:all .15s;line-height:1}
+.thumb:hover{border-color:var(--text3);transform:translateY(-1px)}
+.thumb.up.on{background:var(--sp-light);border-color:var(--sp)}
+.thumb.down.on{background:var(--red-light);border-color:var(--red)}
+.rate-hint{font-size:.76rem;color:var(--text3);text-align:center;margin-top:4px}
+/* Recommendation rows */
+.rec-row{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;border:1px solid #86efac;background:var(--green-light);margin-bottom:7px}
+.rec-rank{font-family:'Fraunces',serif;font-weight:700;color:#065f46;font-size:1.15rem;min-width:20px;text-align:center}
+.rec-empty{padding:14px;border-radius:10px;background:var(--yellow-light);border:1px solid #fcd34d;color:#78350f;font-size:.85rem;text-align:center}
+
 .panel{display:block!important}</style>
 </head>
 <body>
@@ -255,20 +273,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="step-header">
       <div class="step-lbl sp-lbl">🎵 Supervised · Spotify</div>
       <div class="step-counter">Step 2 of 6</div>
-      <h2>Your past reactions are the training data</h2>
+      <h2>You teach it — react to each song</h2>
     </div>
     <div class="card">
-      <div class="card-label">Songs you've already labelled 👆</div>
-      <div class="track hl" style="margin-bottom:6px"><div class="track-art">🔥</div><div style="flex:1"><div class="track-name">HUMBLE.</div><div class="track-artist">Kendrick Lamar</div></div><span class="t-badge t-like">👍 Liked</span></div>
-      <div class="track hl" style="margin-bottom:6px"><div class="track-art">✨</div><div style="flex:1"><div class="track-name">Levitating</div><div class="track-artist">Dua Lipa</div></div><span class="t-badge t-like">👍 Liked</span></div>
-      <div class="track hl-skip" style="margin-bottom:6px"><div class="track-art">🌲</div><div style="flex:1"><div class="track-name">Holocene</div><div class="track-artist">Bon Iver</div></div><span class="t-badge t-skip">👎 Skipped</span></div>
-      <div class="track hl-skip"><div class="track-art">🍂</div><div style="flex:1"><div class="track-name">River</div><div class="track-artist">Joni Mitchell</div></div><span class="t-badge t-skip">👎 Skipped</span></div>
+      <div class="card-label">Tap 👍 or 👎 for each — this becomes your training data</div>
+      <div id="sp2-rate"></div>
+      <div class="rate-hint" id="sp2-hint">Rate at least one 👍 to continue.</div>
     </div>
-    <div class="key-idea">Every 👍 or 👎 creates a <strong>labelled example</strong> — that's the training data the model learns from.</div>
+    <div class="key-idea">Every 👍 or 👎 creates a <strong>labelled example</strong> — the training data the model learns from.</div>
     <div class="step-nav">
       <button class="nav-btn back" onclick="spStep(1)">← Back</button>
       <div class="progress-dots" id="sp-dots"></div>
-      <button class="nav-btn next-sp" onclick="spStep(3)">Next →</button>
+      <button class="nav-btn next-sp" id="sp2-next" onclick="spStep(3)" disabled>Next →</button>
     </div>
   </div>
 
@@ -276,13 +292,17 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="step-header">
       <div class="step-lbl sp-lbl">🎵 Supervised · Spotify</div>
       <div class="step-counter">Step 3 of 6</div>
-      <h2>Every song becomes a set of numbers</h2>
+      <h2>Every song becomes a point</h2>
     </div>
     <div class="card">
-      <div class="card-label">Feature scan — "Blinding Lights"</div>
-      <div id="sp3-bars"></div>
+      <div class="card-label">Your ratings, placed by their numbers</div>
+      <svg id="sp3-scatter" width="100%" height="190" viewBox="0 0 300 190" style="display:block"></svg>
+      <div style="display:flex;gap:14px;justify-content:center;font-size:.72rem;color:var(--text2);margin-top:5px;flex-wrap:wrap">
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--sp);margin-right:4px;vertical-align:middle"></span>You liked 👍</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f87171;margin-right:4px;vertical-align:middle"></span>You skipped 👎</span>
+      </div>
     </div>
-    <div class="key-idea">The model doesn't "listen" — it only sees <strong>numbers</strong>. Each feature is one dimension of the song's fingerprint.</div>
+    <div class="key-idea">The model doesn't "listen" — it sees only <strong>numbers</strong>. Each song is a point; liked songs land near each other.</div>
     <div class="step-nav">
       <button class="nav-btn back" onclick="spStep(2)">← Back</button>
       <div class="progress-dots" id="sp-dots"></div>
@@ -294,28 +314,26 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="step-header">
       <div class="step-lbl sp-lbl">🎵 Supervised · Spotify</div>
       <div class="step-counter">Step 4 of 6</div>
-      <h2>How similar is it to your liked songs?</h2>
+      <h2>It measures distance to your likes</h2>
     </div>
     <div class="card">
-      <div class="match-row yes"><span style="font-size:1.2rem">🔥</span><span style="flex:1">HUMBLE. — high energy, fast BPM</span><span class="match-pct" style="color:#065f46">92% ✓</span></div>
-      <div class="match-row yes"><span style="font-size:1.2rem">✨</span><span style="flex:1">Levitating — upbeat, danceable</span><span class="match-pct" style="color:#065f46">85% ✓</span></div>
-      <div class="match-row no"><span style="font-size:1.2rem">🌲</span><span style="flex:1">Holocene — slow, low energy</span><span class="match-pct" style="color:#991b1b">12% ✗</span></div>
-      <div class="match-row no"><span style="font-size:1.2rem">🍂</span><span style="flex:1">River — acoustic, low BPM</span><span class="match-pct" style="color:#991b1b">8% ✗</span></div>
+      <div class="card-label">New songs, ranked by closeness to what you liked</div>
+      <div id="sp4-matches"></div>
       <div style="margin-top:12px">
-        <div class="card-label" style="margin-bottom:8px">Feature space — where does "Blinding Lights" land?</div>
-        <svg id="sp4-scatter" width="100%" height="150" viewBox="0 0 300 150" style="display:block"></svg>
-        <div style="display:flex;gap:14px;justify-content:center;font-size:.72rem;color:var(--text2);margin-top:5px;flex-wrap:wrap">
-          <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--sp);margin-right:4px;vertical-align:middle"></span>Liked</span>
-          <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f87171;margin-right:4px;vertical-align:middle"></span>Skipped</span>
-          <span><span style="display:inline-block;width:11px;height:11px;background:#f59e0b;margin-right:4px;vertical-align:middle;transform:rotate(45deg);display:inline-flex"></span>New song</span>
+        <div class="card-label" style="margin-bottom:8px">Feature space — ⭐ marks the centre of your likes</div>
+        <svg id="sp4-scatter" width="100%" height="190" viewBox="0 0 300 190" style="display:block"></svg>
+        <div style="display:flex;gap:12px;justify-content:center;font-size:.72rem;color:var(--text2);margin-top:5px;flex-wrap:wrap">
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--sp);margin-right:4px;vertical-align:middle"></span>You liked</span>
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#f87171;margin-right:4px;vertical-align:middle"></span>You skipped</span>
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#9c9590;margin-right:4px;vertical-align:middle"></span>New songs</span>
         </div>
       </div>
     </div>
-    <div class="key-idea">The new song lands right inside the <strong>liked cluster</strong> — the model's prediction is confident.</div>
+    <div class="key-idea">No magic — the model just finds new songs <strong>closest</strong> to the ones you liked. That's the whole model.</div>
     <div class="step-nav">
       <button class="nav-btn back" onclick="spStep(3)">← Back</button>
       <div class="progress-dots" id="sp-dots"></div>
-      <button class="nav-btn next-sp" onclick="spStep(5)">Next →</button>
+      <button class="nav-btn next-sp" onclick="spStep(5)">See picks →</button>
     </div>
   </div>
 
@@ -323,20 +341,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="step-header">
       <div class="step-lbl sp-lbl">🎵 Supervised · Spotify</div>
       <div class="step-counter">Step 5 of 6</div>
-      <h2>Prediction: 👍 — added to your queue</h2>
+      <h2>Your Discover Weekly</h2>
     </div>
     <div class="card">
-      <div class="track hl" style="margin-bottom:10px"><div class="track-art">🌃</div><div style="flex:1"><div class="track-name">Blinding Lights</div><div class="track-artist">The Weeknd</div></div><span class="t-badge t-like">👍 Play</span></div>
-      <div class="verdict like">✓ Added to Discover Weekly</div>
-      <div style="margin-top:14px">
-        <div class="card-label" style="margin-bottom:6px">Model confidence</div>
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="flex:1;height:14px;background:var(--border);border-radius:7px;overflow:hidden"><div id="sp5-conf" style="height:14px;border-radius:7px;background:var(--sp);width:0%;transition:width .8s"></div></div>
-          <span style="font-weight:700;font-size:.95rem;color:var(--sp);min-width:36px" id="sp5-conf-lbl">0%</span>
-        </div>
-      </div>
+      <div class="card-label">Top picks — built from the songs you liked</div>
+      <div id="sp5-recs"></div>
+      <button class="nav-btn back" onclick="spStep(2)" style="margin-top:10px;padding:8px 16px;font-size:.78rem">↺ Re-rate the songs</button>
     </div>
-    <div class="key-idea">The model matched features → found the pattern → made a prediction. That's <strong>supervised learning</strong>.</div>
+    <div class="key-idea">You labelled examples → the model learned your pattern → it predicted new picks. That's <strong>supervised learning</strong>.</div>
     <div class="step-nav">
       <button class="nav-btn back" onclick="spStep(4)">← Back</button>
       <div class="progress-dots" id="sp-dots"></div>
@@ -413,53 +425,129 @@ function updateDots(pfx,cur,tot){
 }
 
 /* ══ SPOTIFY ════════════════════════════════════════ */
+/* Each song is a point in feature space: e = energy, t = tempo (0–1). */
+var SP_RATE=[
+  {n:'Blinding Lights',a:'The Weeknd',ic:'🌃',e:.90,t:.85},
+  {n:'Levitating',a:'Dua Lipa',ic:'✨',e:.86,t:.90},
+  {n:'HUMBLE.',a:'Kendrick Lamar',ic:'🔥',e:.88,t:.78},
+  {n:'Holocene',a:'Bon Iver',ic:'🌲',e:.20,t:.25},
+  {n:'River',a:'Joni Mitchell',ic:'🍂',e:.15,t:.20},
+  {n:'Skinny Love',a:'Birdy',ic:'🤍',e:.28,t:.32}
+];
+var SP_CAND=[
+  {n:"Don't Start Now",a:'Dua Lipa',ic:'💃',e:.84,t:.88},
+  {n:'As It Was',a:'Harry Styles',ic:'🌅',e:.70,t:.74},
+  {n:'Sunflower',a:'Post Malone',ic:'🌻',e:.58,t:.66},
+  {n:'The Night We Met',a:'Lord Huron',ic:'🌙',e:.22,t:.30},
+  {n:'Liability',a:'Lorde',ic:'🕊️',e:.18,t:.24},
+  {n:'Motion Picture Soundtrack',a:'Radiohead',ic:'🎞️',e:.12,t:.16}
+];
+var spRatings={}; /* index -> 'like' | 'skip' */
+
+function dist(a,b){return Math.sqrt((a.e-b.e)*(a.e-b.e)+(a.t-b.t)*(a.t-b.t));}
+function likedSongs(){return SP_RATE.filter(function(s,i){return spRatings[i]==='like';});}
+function skippedSongs(){return SP_RATE.filter(function(s,i){return spRatings[i]==='skip';});}
+function likedCentroid(){
+  var L=likedSongs();if(!L.length)return null;
+  var e=0,t=0;L.forEach(function(s){e+=s.e;t+=s.t;});
+  return {e:e/L.length,t:t/L.length};
+}
+/* map feature point (0–1) into the SVG plot area */
+function spXY(s){return {x:30+s.e*250,y:165-s.t*150};}
+
 var cSp=1;
 function spStep(n){
   cSp=n;showStep('sp',n,6);
-  if(n===3)setTimeout(initSp3,80);
-  if(n===4)setTimeout(initSp4,80);
-  if(n===5)setTimeout(initSp5,80);
+  if(n===2)setTimeout(buildSpRate,40);
+  if(n===3)setTimeout(buildSp3Scatter,80);
+  if(n===4)setTimeout(buildSp4,80);
+  if(n===5)setTimeout(buildSp5,80);
 }
 
-function initSp3(){
-  var feats=[
-    {ic:'⚡',l:'Energy',    v:.87,c:'#10b981'},
-    {ic:'🥁',l:'BPM',       v:.86,c:'#6366f1'},
-    {ic:'😊',l:'Mood',      v:.33,c:'#ec4899'},
-    {ic:'⭐',l:'Familiarity',v:.90,c:'#f59e0b'},
-  ];
-  var el=document.getElementById('sp3-bars');if(!el)return;
-  el.innerHTML=feats.map(function(f){
-    return '<div class="feat-bar-row"><span class="feat-icon">'+f.ic+'</span>'
-      +'<span class="feat-label">'+f.l+'</span>'
-      +'<div class="feat-track"><div class="feat-fill" id="ff'+f.l+'" style="background:'+f.c+'"></div></div>'
-      +'<span class="feat-pct">'+Math.round(f.v*100)+'%</span></div>';
+function buildSpRate(){
+  var el=document.getElementById('sp2-rate');if(!el)return;
+  el.innerHTML=SP_RATE.map(function(s,i){
+    var r=spRatings[i],cls=r==='like'?' liked':r==='skip'?' skipped':'';
+    return '<div class="rate-row'+cls+'" id="rr'+i+'">'
+      +'<div class="rate-art">'+s.ic+'</div>'
+      +'<div class="rate-meta"><div class="track-name">'+s.n+'</div><div class="track-artist">'+s.a+'</div></div>'
+      +'<div class="thumbs">'
+      +'<button class="thumb up'+(r==='like'?' on':'')+'" onclick="spRate('+i+",'like')\">👍</button>"
+      +'<button class="thumb down'+(r==='skip'?' on':'')+'" onclick="spRate('+i+",'skip')\">👎</button>"
+      +'</div></div>';
   }).join('');
-  setTimeout(function(){feats.forEach(function(f){var b=document.getElementById('ff'+f.l);if(b)b.style.width=Math.round(f.v*100)+'%';});},60);
+  spUpdateGate();
+}
+function spRate(i,v){
+  spRatings[i]=(spRatings[i]===v)?undefined:v;
+  buildSpRate();
+}
+function spUpdateGate(){
+  var nLike=likedSongs().length,n=Object.keys(spRatings).filter(function(k){return spRatings[k];}).length;
+  var next=document.getElementById('sp2-next'),hint=document.getElementById('sp2-hint');
+  if(next)next.disabled=nLike<1;
+  if(hint)hint.textContent=nLike<1?'Rate at least one 👍 to continue.':'Nice — '+n+' rated, '+nLike+' liked. Tap Next →';
 }
 
-function initSp4(){
-  var svg=document.getElementById('sp4-scatter');if(!svg)return;
-  var liked=[{x:190,y:35},{x:205,y:50},{x:175,y:45}];
-  var skipped=[{x:55,y:115},{x:70,y:125},{x:48,y:110}];
-  var ns={x:195,y:40};
-  var h='<line x1="25" y1="8" x2="25" y2="138" stroke="#d5cfc4" stroke-width="1.5"/>'
-    +'<line x1="25" y1="138" x2="290" y2="138" stroke="#d5cfc4" stroke-width="1.5"/>'
-    +'<text x="158" y="152" font-size="10" fill="#9c9590" text-anchor="middle" font-family="DM Sans,sans-serif">Energy →</text>'
-    +'<text x="12" y="73" font-size="10" fill="#9c9590" text-anchor="middle" transform="rotate(-90,12,73)" font-family="DM Sans,sans-serif">BPM →</text>';
-  h+='<circle cx="193" cy="43" r="30" fill="#10b981" fill-opacity=".09" stroke="#86efac" stroke-width="1.5" stroke-dasharray="5,3"/>';
-  h+='<circle cx="58" cy="117" r="28" fill="#ef4444" fill-opacity=".09" stroke="#fca5a5" stroke-width="1.5" stroke-dasharray="5,3"/>';
-  liked.forEach(function(p){h+='<circle cx="'+p.x+'" cy="'+p.y+'" r="8" fill="#10b981" stroke="#fff" stroke-width="2"/>';});
-  skipped.forEach(function(p){h+='<circle cx="'+p.x+'" cy="'+p.y+'" r="8" fill="#f87171" stroke="#fff" stroke-width="2"/>';});
-  h+='<rect x="'+(ns.x-7)+'" y="'+(ns.y-7)+'" width="14" height="14" fill="#f59e0b" stroke="#fff" stroke-width="2" transform="rotate(45,'+ns.x+','+ns.y+')"/>';
-  h+='<text x="'+(ns.x+13)+'" y="'+(ns.y+4)+'" font-size="9.5" fill="#92400e" font-weight="600" font-family="DM Sans,sans-serif">Blinding Lights</text>';
+function spAxes(){
+  return '<line x1="30" y1="12" x2="30" y2="165" stroke="#d5cfc4" stroke-width="1.5"/>'
+    +'<line x1="30" y1="165" x2="285" y2="165" stroke="#d5cfc4" stroke-width="1.5"/>'
+    +'<text x="160" y="182" font-size="10" fill="#9c9590" text-anchor="middle" font-family="DM Sans,sans-serif">Energy →</text>'
+    +'<text x="14" y="90" font-size="10" fill="#9c9590" text-anchor="middle" transform="rotate(-90,14,90)" font-family="DM Sans,sans-serif">Tempo →</text>';
+}
+function buildSp3Scatter(){
+  var svg=document.getElementById('sp3-scatter');if(!svg)return;
+  var h=spAxes();
+  SP_RATE.forEach(function(s,i){
+    var r=spRatings[i];if(!r)return;
+    var p=spXY(s),col=r==='like'?'#10b981':'#f87171';
+    h+='<circle cx="'+p.x+'" cy="'+p.y+'" r="8" fill="'+col+'" stroke="#fff" stroke-width="2"/>';
+    h+='<text x="'+(p.x+11)+'" y="'+(p.y+4)+'" font-size="8.5" fill="'+col+'" font-weight="600" font-family="DM Sans,sans-serif">'+s.n+'</text>';
+  });
   svg.innerHTML=h;
 }
 
-function initSp5(){
-  var bar=document.getElementById('sp5-conf'),lbl=document.getElementById('sp5-conf-lbl');
-  if(!bar||!lbl)return;
-  var v=0,iv=setInterval(function(){v+=2;bar.style.width=v+'%';lbl.textContent=v+'%';if(v>=89)clearInterval(iv);},18);
+/* rank candidates by distance to the centre of liked songs */
+function rankedCandidates(){
+  var c=likedCentroid();if(!c)return [];
+  return SP_CAND.map(function(s){return {s:s,d:dist(s,c)};})
+    .sort(function(a,b){return a.d-b.d;});
+}
+function matchPct(d){return Math.max(0,Math.min(100,Math.round((1-d/1.0)*100)));}
+
+function buildSp4(){
+  var list=document.getElementById('sp4-matches');
+  var ranked=rankedCandidates();
+  if(list){
+    list.innerHTML=ranked.map(function(r){
+      var ok=r.d<.35;
+      return '<div class="match-row '+(ok?'yes':'no')+'"><span style="font-size:1.2rem">'+r.s.ic+'</span>'
+        +'<span style="flex:1">'+r.s.n+'</span>'
+        +'<span class="match-pct" style="color:'+(ok?'#065f46':'#991b1b')+'">'+matchPct(r.d)+'%</span></div>';
+    }).join('');
+  }
+  var svg=document.getElementById('sp4-scatter');if(!svg)return;
+  var h=spAxes();
+  skippedSongs().forEach(function(s){var p=spXY(s);h+='<circle cx="'+p.x+'" cy="'+p.y+'" r="7" fill="#f87171" stroke="#fff" stroke-width="2"/>';});
+  likedSongs().forEach(function(s){var p=spXY(s);h+='<circle cx="'+p.x+'" cy="'+p.y+'" r="7" fill="#10b981" stroke="#fff" stroke-width="2"/>';});
+  SP_CAND.forEach(function(s){var p=spXY(s);h+='<circle cx="'+p.x+'" cy="'+p.y+'" r="6" fill="#9c9590" stroke="#fff" stroke-width="1.5"/>';});
+  var c=likedCentroid();
+  if(c){var pc=spXY(c);
+    h+='<text x="'+pc.x+'" y="'+(pc.y+6)+'" font-size="20" text-anchor="middle">⭐</text>';
+  }
+  svg.innerHTML=h;
+}
+
+function buildSp5(){
+  var el=document.getElementById('sp5-recs');if(!el)return;
+  var ranked=rankedCandidates().slice(0,3);
+  if(!ranked.length){el.innerHTML='<div class="rec-empty">No 👍 yet — go back and like a song so the model has something to learn from.</div>';return;}
+  el.innerHTML=ranked.map(function(r,i){
+    return '<div class="rec-row"><span class="rec-rank">'+(i+1)+'</span>'
+      +'<div class="rate-art">'+r.s.ic+'</div>'
+      +'<div class="rate-meta"><div class="track-name">'+r.s.n+'</div><div class="track-artist">'+r.s.a+'</div></div>'
+      +'<span class="t-badge t-like">'+matchPct(r.d)+'% match</span></div>';
+  }).join('');
 }
 
 

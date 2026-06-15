@@ -212,6 +212,21 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 
 @media(max-width:480px){.cell{width:44px;height:44px;font-size:1.1rem}.tab-btn{padding:8px 12px}}
 
+/* Interactive cluster labelling */
+.lbl-btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.lbl-btn{padding:6px 12px;border-radius:8px;border:1.5px solid var(--border2);background:var(--surface);font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:600;color:var(--text2);cursor:pointer;transition:all .15s}
+.lbl-btn:hover{border-color:var(--text3);color:var(--text)}
+.lbl-btn.sel{background:var(--ig-light);border-color:#e1306c;color:#7c1048}
+.reveal{display:none;margin-top:10px;padding:12px 14px;border-radius:12px;background:var(--ig-light);border:1px solid var(--ig-mid);font-size:.83rem;color:#5c0d35;line-height:1.6}
+.reveal.show{display:block;animation:fadeUp .3s ease}
+.reveal strong{color:#7c1048}
+/* Quiz options */
+.quiz-opt{display:block;width:100%;text-align:left;padding:11px 14px;border-radius:10px;border:1.5px solid var(--border2);background:var(--surface);font-family:'DM Sans',sans-serif;font-size:.84rem;color:var(--text);cursor:pointer;margin-bottom:7px;transition:all .15s}
+.quiz-opt:hover:not(:disabled){border-color:var(--text3)}
+.quiz-opt.correct{background:var(--green-light);border-color:#34d399;color:#065f46;font-weight:600}
+.quiz-opt.wrong{background:var(--red-light);border-color:#f87171;color:#991b1b}
+.quiz-opt:disabled{cursor:default}
+
 .panel{display:block!important}</style>
 </head>
 <body>
@@ -274,22 +289,22 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="step-header">
       <div class="step-lbl ig-lbl">📸 Unsupervised · Instagram</div>
       <div class="step-counter">Step 3 of 6</div>
-      <h2>Some users behave almost identically</h2>
+      <h2>Three groups emerge — with no names</h2>
     </div>
     <div class="card">
-      <div class="card-label">Alex, Sam & Morgan — highlighted by the model</div>
+      <div class="card-label">Users grouped by behaviour — the model only sees clusters</div>
       <div class="user-grid" id="ig3-grid"></div>
       <div style="margin-top:13px">
         <div class="card-label" style="margin-bottom:8px">Users plotted by behaviour (2D)</div>
         <svg id="ig3-scatter" width="100%" height="160" viewBox="0 0 280 160" style="display:block"></svg>
         <div style="display:flex;gap:12px;justify-content:center;font-size:.72rem;color:var(--text2);margin-top:5px;flex-wrap:wrap">
-          <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#10b981;margin-right:4px;vertical-align:middle"></span>Fitness</span>
-          <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#6366f1;margin-right:4px;vertical-align:middle"></span>Gaming</span>
-          <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#ec4899;margin-right:4px;vertical-align:middle"></span>Creative</span>
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#10b981;margin-right:4px;vertical-align:middle"></span>Group A</span>
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#6366f1;margin-right:4px;vertical-align:middle"></span>Group B</span>
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#ec4899;margin-right:4px;vertical-align:middle"></span>Group C</span>
         </div>
       </div>
     </div>
-    <div class="key-idea">Each colour is a cluster. The same colours appear on both the profiles and the chart — the model grouped them automatically.</div>
+    <div class="key-idea">The model found that these three groups <strong>exist</strong> — but it has no idea what they are. There are no names yet, only clusters.</div>
     <div class="step-nav">
       <button class="nav-btn back" onclick="igStep(2)">← Back</button>
       <div class="progress-dots" id="ig-dots"></div>
@@ -301,22 +316,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="step-header">
       <div class="step-lbl ig-lbl">📸 Unsupervised · Instagram</div>
       <div class="step-counter">Step 4 of 6</div>
-      <h2>Three communities emerge</h2>
+      <h2>Now <em>you</em> name the groups</h2>
     </div>
     <div class="card">
-      <div class="cluster-card c0"><h4>Fitness & wellness</h4><div class="chip-row"><span class="chip chip0">Alex</span><span class="chip chip0">Sam</span><span class="chip chip0">Morgan</span></div></div>
-      <div class="cluster-card c1"><h4>Gaming & tech</h4><div class="chip-row"><span class="chip chip1">Jamie</span><span class="chip chip1">Jordan</span><span class="chip chip1">Riley</span></div></div>
-      <div class="cluster-card c2"><h4>Creative & visual</h4><div class="chip-row"><span class="chip chip2">Taylor</span><span class="chip chip2">Casey</span><span class="chip chip2">Avery</span></div></div>
-      <div style="margin-top:13px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:center">
-        <svg id="ig4-donut" width="110" height="110" viewBox="0 0 110 110" style="flex-shrink:0"></svg>
-        <div style="font-size:.78rem;color:var(--text2);line-height:2">
-          <div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#10b981;margin-right:6px;vertical-align:middle"></span>Fitness — 3 users</div>
-          <div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#6366f1;margin-right:6px;vertical-align:middle"></span>Gaming — 3 users</div>
-          <div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#ec4899;margin-right:6px;vertical-align:middle"></span>Creative — 3 users</div>
-        </div>
-      </div>
+      <div class="card-label">Look at each group's behaviour, then pick a name</div>
+      <div id="ig4-clusters"></div>
+      <div class="reveal" id="ig4-reveal"><strong>That's the human step.</strong> You just supplied those names — the model never knew "fitness" or "gaming." It only found the clusters; people interpret and label them afterward.</div>
     </div>
-    <div class="key-idea">Zero labels used. The model <strong>discovered</strong> these groups entirely from raw behaviour.</div>
+    <div class="key-idea">The model <strong>discovers</strong> the groups from raw behaviour. Humans <strong>label</strong> them after — those are two separate steps.</div>
     <div class="step-nav">
       <button class="nav-btn back" onclick="igStep(3)">← Back</button>
       <div class="progress-dots" id="ig-dots"></div>
@@ -328,14 +335,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="step-header">
       <div class="step-lbl ig-lbl">📸 Unsupervised · Instagram</div>
       <div class="step-counter">Step 5 of 6</div>
-      <h2>Each cluster now sees a different feed</h2>
+      <h2>So how does it know a <em>post</em> is "gaming"?</h2>
     </div>
     <div class="card">
-      <div class="cluster-card c0"><h4>Fitness cluster sees</h4><p style="font-size:.82rem;color:var(--text2);margin-top:4px">🏋️ Workout reels &nbsp;·&nbsp; 🥗 Nutrition ads &nbsp;·&nbsp; 🏅 Marathon events</p></div>
-      <div class="cluster-card c1"><h4>Gaming cluster sees</h4><p style="font-size:.82rem;color:var(--text2);margin-top:4px">🎮 Esports clips &nbsp;·&nbsp; 🖥️ Gear ads &nbsp;·&nbsp; 📺 Streamer highlights</p></div>
-      <div class="cluster-card c2"><h4>Creative cluster sees</h4><p style="font-size:.82rem;color:var(--text2);margin-top:4px">🎨 Design portfolios &nbsp;·&nbsp; 📷 Photography tips &nbsp;·&nbsp; 👗 Fashion drops</p></div>
+      <div class="card-label">A brand-new video gets uploaded. How does Instagram sort it?</div>
+      <div id="ig5-quiz"></div>
+      <div class="reveal" id="ig5-reveal"><strong>Same unsupervised idea — on content this time.</strong> Instagram clusters posts by <strong>who watches and likes them</strong>. If the same users who love esports clips keep watching a new video, it lands in that group. No human tags each upload — user interactions reveal the categories.</div>
     </div>
-    <div class="key-idea">The discovered clusters drive <strong>real product decisions</strong> — ads, reels, recommendations.</div>
+    <div class="key-idea">Users <em>and</em> content are both clustered from <strong>behaviour</strong> — then matched to each other to build your feed.</div>
     <div class="step-nav">
       <button class="nav-btn back" onclick="igStep(4)">← Back</button>
       <div class="progress-dots" id="ig-dots"></div>
@@ -349,11 +356,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       <div class="step-counter">Step 6 of 6</div>
       <h2>What is unsupervised learning?</h2>
     </div>
-    <div class="def-box def-ig"><span>Find hidden structure in <em>unlabelled</em> data — no right answers given, just patterns discovered.</span></div>
-    <div class="recap-point"><span class="ri">🚫</span>No labels — the model gets raw data with no answers</div>
-    <div class="recap-point"><span class="ri">🔍</span>It finds groups based on similarity in behaviour</div>
-    <div class="recap-point"><span class="ri">✨</span>Structure emerges automatically — no human assigns a label</div>
-    <div class="qcheck" style="margin-top:12px"><strong>💬 Quick check — If Instagram asked users "are you a gamer?" before grouping them, is that still unsupervised?</strong><em>No — asking for labels makes it supervised. Unsupervised means the model finds groups on its own.</em></div>
+    <div class="def-box def-ig"><span>Find hidden structure in <em>unlabelled</em> data — the model groups by similarity; humans interpret the groups after.</span></div>
+    <div class="recap-point"><span class="ri">🚫</span>No labels — the model gets raw behaviour with no answers</div>
+    <div class="recap-point"><span class="ri">🔍</span>It finds groups based on similarity — users <em>and</em> content</div>
+    <div class="recap-point"><span class="ri">🏷️</span>People label the groups afterward — a separate, human step</div>
+    <div class="qcheck" style="margin-top:12px"><strong>💬 Quick check — The model found 3 groups but no names. Did it do "unsupervised learning"?</strong><em>Yes — finding the groups is the unsupervised part. Naming them "fitness" or "gaming" is a human label added on top.</em></div>
     <div class="step-nav">
       <button class="nav-btn back" onclick="igStep(5)">← Back</button>
       <div class="progress-dots" id="ig-dots"></div>
@@ -467,18 +474,51 @@ function buildIG3Scatter(){
   svg.innerHTML=h;
 }
 
-function buildDonut(){
-  var svg=document.getElementById('ig4-donut');if(!svg)return;
-  var cx=55,cy=55,R=42,sw=18;
-  var segs=[{c:'#10b981',pct:33.3,off:0},{c:'#6366f1',pct:33.3,off:33.3},{c:'#ec4899',pct:33.4,off:66.6}];
-  var circ=2*Math.PI*R,h='';
-  segs.forEach(function(s){
-    var dash=(s.pct/100)*circ,gap=circ-dash,rot=-90+(s.off/100)*360;
-    h+='<circle cx="'+cx+'" cy="'+cy+'" r="'+R+'" fill="none" stroke="'+s.c+'" stroke-width="'+sw+'" stroke-dasharray="'+dash.toFixed(1)+' '+gap.toFixed(1)+'" transform="rotate('+rot+' '+cx+' '+cy+')" stroke-linecap="butt"/>';
+/* ── Step 4: students label the discovered clusters ── */
+var IG_CLUSTERS=[
+  {id:0,beh:['❤️ Likes workout reels','👥 Follows gym & trainer accounts','🥗 Saves healthy recipes']},
+  {id:1,beh:['🎮 Watches esports clips','👥 Follows streamers','🖱️ Likes gaming-gear posts']},
+  {id:2,beh:['🎨 Saves design portfolios','📷 Follows photographers','👗 Likes fashion & art posts']}
+];
+var IG_LABELS=['Fitness','Gaming','Creative'];
+var igNames={}; /* clusterId -> chosen label */
+
+function buildIG4(){
+  var el=document.getElementById('ig4-clusters');if(!el)return;
+  el.innerHTML=IG_CLUSTERS.map(function(c){
+    var letter=String.fromCharCode(65+c.id);
+    return '<div class="cluster-card c'+c.id+'"><h4>Group '+letter+(igNames[c.id]?' → '+igNames[c.id]:'')+'</h4>'
+      +'<div style="font-size:.8rem;color:var(--text2);line-height:1.9">'+c.beh.join('<br>')+'</div>'
+      +'<div class="lbl-btns">'+IG_LABELS.map(function(l){
+          return '<button class="lbl-btn'+(igNames[c.id]===l?' sel':'')+'" onclick="igName('+c.id+",'"+l+"')\">"+l+'</button>';
+        }).join('')+'</div></div>';
+  }).join('');
+  var done=IG_CLUSTERS.every(function(c){return igNames[c.id];});
+  var rev=document.getElementById('ig4-reveal');if(rev)rev.classList.toggle('show',done);
+}
+function igName(id,l){ igNames[id]=l; buildIG4(); }
+
+/* ── Step 5: how is content sorted? ── */
+function buildIG5(){
+  var el=document.getElementById('ig5-quiz');if(!el)return;
+  var opts=[
+    {t:'A reviewer at Instagram watches every upload and tags it',ok:false},
+    {t:'It groups the video with others the same users watch & like',ok:true},
+    {t:'The uploader must pick a category before posting',ok:false}
+  ];
+  el.innerHTML=opts.map(function(o,i){
+    return '<button class="quiz-opt" id="iqo'+i+'" data-ok="'+o.ok+'" onclick="igAnswer('+i+')">'+o.t+'</button>';
+  }).join('');
+}
+function igAnswer(i){
+  var opts=document.querySelectorAll('#ig5-quiz .quiz-opt');
+  opts.forEach(function(b){
+    b.disabled=true;
+    if(b.getAttribute('data-ok')==='true')b.classList.add('correct');
   });
-  h+='<circle cx="'+cx+'" cy="'+cy+'" r="'+(R-sw/2-2)+'" fill="#fff"/>';
-  h+='<text x="'+cx+'" y="'+cy+'" font-size="12" font-weight="700" fill="#1a1814" text-anchor="middle" dominant-baseline="middle" font-family="Fraunces,serif">9</text>';
-  svg.innerHTML=h;
+  var chosen=document.getElementById('iqo'+i);
+  if(chosen&&chosen.getAttribute('data-ok')!=='true')chosen.classList.add('wrong');
+  var rev=document.getElementById('ig5-reveal');if(rev)rev.classList.add('show');
 }
 
 var cIg=1;
@@ -487,7 +527,8 @@ function igStep(n){
   if(n===1)buildIG('ig1-grid','plain');
   if(n===2)buildBehBars();
   if(n===3){buildIG('ig3-grid','clustered');setTimeout(buildIG3Scatter,80);}
-  if(n===4)setTimeout(buildDonut,80);
+  if(n===4)buildIG4();
+  if(n===5)buildIG5();
 }
 
 
