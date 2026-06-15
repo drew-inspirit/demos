@@ -233,16 +233,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .rec-row{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;border:1px solid #86efac;background:var(--green-light);margin-bottom:7px}
 .rec-rank{font-family:'Fraunces',serif;font-weight:700;color:#065f46;font-size:1.15rem;min-width:20px;text-align:center}
 .rec-empty{padding:14px;border-radius:10px;background:var(--yellow-light);border:1px solid #fcd34d;color:#78350f;font-size:.85rem;text-align:center}
-/* Predict-before-reveal */
-.pred-opt{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:10px 13px;border-radius:10px;border:1.5px solid var(--border2);background:var(--surface);font-family:'DM Sans',sans-serif;font-size:.86rem;font-weight:600;color:var(--text);cursor:pointer;margin-bottom:7px;transition:all .15s}
-.pred-opt:hover:not(:disabled){border-color:var(--text3)}
-.pred-opt.correct{background:var(--sp-light);border-color:var(--sp);color:#065f46}
-.pred-opt.wrong{background:var(--red-light);border-color:#f87171;color:#991b1b}
-.pred-opt:disabled{cursor:default}
-.pred-art{width:32px;height:32px;border-radius:7px;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
-.reveal{display:none;margin-top:10px;padding:12px 14px;border-radius:12px;background:var(--sp-light);border:1px solid var(--sp-mid);font-size:.83rem;color:#0a4020;line-height:1.6}
-.reveal.show{display:block;animation:fadeUp .3s ease}
-.reveal strong{color:#0a5c28}
 
 .panel{display:block!important}</style>
 </head>
@@ -258,7 +248,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   <div class="step" id="sp-1">
     <div class="step-header">
       <div class="step-lbl sp-lbl">🎵 Supervised · Spotify</div>
-      <div class="step-counter">Step 1 of 5</div>
+      <div class="step-counter">Step 1 of 4</div>
       <h2>You teach it: react to each song</h2>
       <p class="caption">Spotify can only predict your taste once you've shown it some. Tap 👍 or 👎 below.</p>
     </div>
@@ -278,7 +268,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   <div class="step" id="sp-2">
     <div class="step-header">
       <div class="step-lbl sp-lbl">🎵 Supervised · Spotify</div>
-      <div class="step-counter">Step 2 of 5</div>
+      <div class="step-counter">Step 2 of 4</div>
       <h2>Each song is a point, and it finds the closest</h2>
     </div>
     <div class="card">
@@ -296,33 +286,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="step-nav">
       <button class="nav-btn back" onclick="spStep(1)">← Back</button>
       <div class="progress-dots" id="sp-dots"></div>
-      <button class="nav-btn next-sp" onclick="spStep(3)">Next →</button>
+      <button class="nav-btn next-sp" onclick="spStep(3)">See picks →</button>
     </div>
   </div>
 
   <div class="step" id="sp-3">
     <div class="step-header">
       <div class="step-lbl sp-lbl">🎵 Supervised · Spotify</div>
-      <div class="step-counter">Step 3 of 5</div>
-      <h2>Your call: which will it recommend?</h2>
-    </div>
-    <div class="card">
-      <div class="card-label">Which new song is closest to your likes? Tap your guess</div>
-      <div id="sp3-predict"></div>
-      <div class="reveal" id="sp3-reveal"></div>
-    </div>
-    <div class="key-idea">The model's pick isn't a mystery. It's just whichever song lands <strong>nearest your likes</strong>.</div>
-    <div class="step-nav">
-      <button class="nav-btn back" onclick="spStep(2)">← Back</button>
-      <div class="progress-dots" id="sp-dots"></div>
-      <button class="nav-btn next-sp" onclick="spStep(4)">See picks →</button>
-    </div>
-  </div>
-
-  <div class="step" id="sp-4">
-    <div class="step-header">
-      <div class="step-lbl sp-lbl">🎵 Supervised · Spotify</div>
-      <div class="step-counter">Step 4 of 5</div>
+      <div class="step-counter">Step 3 of 4</div>
       <h2>Your Discover Weekly</h2>
     </div>
     <div class="card">
@@ -332,16 +303,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     </div>
     <div class="key-idea">You labelled examples → the model learned your pattern → it predicted new picks. That's <strong>supervised learning</strong>.</div>
     <div class="step-nav">
-      <button class="nav-btn back" onclick="spStep(3)">← Back</button>
+      <button class="nav-btn back" onclick="spStep(2)">← Back</button>
       <div class="progress-dots" id="sp-dots"></div>
-      <button class="nav-btn next-sp" onclick="spStep(5)">Recap →</button>
+      <button class="nav-btn next-sp" onclick="spStep(4)">Recap →</button>
     </div>
   </div>
 
-  <div class="step" id="sp-5">
+  <div class="step" id="sp-4">
     <div class="step-header">
       <div class="step-lbl sp-lbl">🎵 Supervised · Recap</div>
-      <div class="step-counter">Step 5 of 5</div>
+      <div class="step-counter">Step 4 of 4</div>
       <h2>What is supervised learning?</h2>
     </div>
     <div class="def-box def-sp"><span>Train on <em>labelled</em> examples → learn the pattern → predict the label for new data.</span></div>
@@ -350,7 +321,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="recap-point"><span class="ri">🎯</span><span>It applies that pattern to predict new, unseen songs</span></div>
     <div class="qcheck" style="margin-top:12px"><strong>💬 Quick check: Why can't Spotify predict your taste if you've never liked or skipped anything?</strong><details><summary>Show answer</summary><em>No training data. Without labelled examples, there's no pattern to learn from.</em></details></div>
     <div class="step-nav">
-      <button class="nav-btn back" onclick="spStep(4)">← Back</button>
+      <button class="nav-btn back" onclick="spStep(3)">← Back</button>
       <div class="progress-dots" id="sp-dots"></div>
       <button class="nav-btn next-sp" style="opacity:1;cursor:default" disabled>✓ Complete</button>
     </div>
@@ -439,11 +410,10 @@ function spXY(s){return {x:30+s.e*250,y:165-s.t*150};}
 
 var cSp=1;
 function spStep(n){
-  cSp=n;showStep('sp',n,5);
+  cSp=n;showStep('sp',n,4);
   if(n===1)setTimeout(buildSpRate,40);
   if(n===2)setTimeout(buildSp4,80);
-  if(n===3)setTimeout(buildSpPredict,60);
-  if(n===4)setTimeout(buildSp5,80);
+  if(n===3)setTimeout(buildSp5,80);
 }
 
 function buildSpRate(){
@@ -477,28 +447,6 @@ function spAxes(){
     +'<text x="160" y="182" font-size="10" fill="#9c9590" text-anchor="middle" font-family="DM Sans,sans-serif">Energy →</text>'
     +'<text x="14" y="90" font-size="10" fill="#9c9590" text-anchor="middle" transform="rotate(-90,14,90)" font-family="DM Sans,sans-serif">Tempo →</text>';
 }
-/* Step 3: predict which candidate the model recommends */
-var SP_PRED_IDX=[0,2,3]; /* Don't Start Now (upbeat), Sunflower (mid), The Night We Met (mellow) */
-var spPredCorrect='';
-function buildSpPredict(){
-  var el=document.getElementById('sp3-predict');if(!el)return;
-  var c=likedCentroid();
-  var opts=SP_PRED_IDX.map(function(i){return {s:SP_CAND[i],d:c?dist(SP_CAND[i],c):0};});
-  spPredCorrect=opts.reduce(function(a,b){return b.d<a.d?b:a;}).s.n;
-  el.innerHTML=opts.map(function(o){
-    return '<button class="pred-opt" data-name="'+o.s.n+'" onclick="spGuess(this)"><span class="pred-art">'+o.s.ic+'</span>'+o.s.n+'<span style="color:var(--text3);font-weight:400;margin-left:5px">'+o.s.a+'</span></button>';
-  }).join('');
-  var rev=document.getElementById('sp3-reveal');if(rev)rev.classList.remove('show');
-}
-function spGuess(btn){
-  var opts=document.querySelectorAll('#sp3-predict .pred-opt');
-  opts.forEach(function(b){b.disabled=true;if(b.getAttribute('data-name')===spPredCorrect)b.classList.add('correct');});
-  var right=btn.getAttribute('data-name')===spPredCorrect;
-  if(!right)btn.classList.add('wrong');
-  var rev=document.getElementById('sp3-reveal');
-  if(rev){rev.innerHTML=(right?'✓ Nice! ':'Not quite. ')+'The model picks <strong>'+spPredCorrect+'</strong>, the song nearest the centre of your likes.';rev.classList.add('show');}
-}
-
 /* rank candidates by distance to the centre of liked songs */
 function rankedCandidates(){
   var c=likedCentroid();if(!c)return [];
