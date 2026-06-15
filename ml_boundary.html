@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interactive Decision Boundary | ML Foundations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f7f5f0; --surface:#fff; --border:#e8e3da; --border2:#d5cfc4;
+  --text:#1a1814; --text2:#6b6560; --text3:#9c9590;
+  --purple:#2F3167;
+  --chill:#38bdf8; --chill-light:#e0f2fe; --chill-dark:#0369a1;
+  --hype:#f472b6;  --hype-light:#fdf2f8;  --hype-dark:#9d174d;
+  --boundary:#2F3167;
+  --yellow:#f59e0b; --yellow-light:#fffbeb;
+  --green:#10b981; --green-light:#ecfdf5;
+  --radius:14px;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.06);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* HEADER */
+.header{padding:1.8rem 1.5rem 1.2rem;text-align:center;max-width:700px;margin:0 auto;border-bottom:1px solid var(--border)}
+.header-tag{display:inline-block;background:var(--purple);color:#fff;font-size:.6rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;padding:4px 12px;border-radius:20px;margin-bottom:10px}
+.header h1{font-family:'Fraunces',serif;font-size:clamp(1.4rem,3.5vw,2rem);font-weight:700;line-height:1.2;margin-bottom:6px;letter-spacing:-.01em}
+.header p{font-size:.85rem;color:var(--text2);line-height:1.6}
+
+/* MAIN LAYOUT */
+.main{max-width:900px;margin:0 auto;padding:1.4rem 1.25rem 3rem;display:grid;grid-template-columns:1fr 260px;gap:1.2rem;align-items:start}
+@media(max-width:680px){.main{grid-template-columns:1fr}}
+
+/* CHART CARD */
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem;box-shadow:var(--shadow)}
+.chart-label{font-size:.67rem;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;font-weight:600;margin-bottom:10px}
+.chart-wrap{position:relative;width:100%;padding-bottom:75%;background:var(--bg);border-radius:10px;border:1px solid var(--border);overflow:hidden;cursor:crosshair}
+.chart-wrap canvas{position:absolute;top:0;left:0;width:100%;height:100%}
+.axis-label-x{text-align:center;font-size:.75rem;color:var(--text2);margin-top:7px;font-weight:500}
+.axis-label-y{position:absolute;left:-22px;top:50%;transform:translateY(-50%) rotate(-90deg);font-size:.75rem;color:var(--text2);font-weight:500;white-space:nowrap}
+.chart-outer{position:relative;padding-left:28px}
+
+/* LEGEND */
+.legend{display:flex;gap:14px;margin-top:10px;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:7px;font-size:.78rem;color:var(--text2);font-weight:500}
+.legend-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+
+/* STATUS BAR */
+.status-bar{margin-top:10px;padding:9px 13px;border-radius:10px;font-size:.8rem;font-weight:500;min-height:36px;display:flex;align-items:center;gap:8px;transition:all .3s}
+.status-bar.neutral{background:var(--bg);border:1px solid var(--border);color:var(--text3)}
+.status-bar.has-boundary{background:var(--yellow-light);border:1px solid #fcd34d;color:#78350f}
+.status-bar.balanced{background:var(--green-light);border:1px solid #86efac;color:#065f46}
+
+/* SIDEBAR */
+.sidebar{display:flex;flex-direction:column;gap:1rem}
+
+/* MODE CARD */
+.mode-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem;box-shadow:var(--shadow)}
+.mode-card h3{font-family:'Fraunces',serif;font-size:.95rem;font-weight:600;margin-bottom:10px;color:var(--text)}
+.mode-btn{width:100%;padding:11px 14px;border-radius:10px;border:2px solid var(--border2);background:var(--bg);font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:9px;margin-bottom:7px}
+.mode-btn:last-child{margin-bottom:0}
+.mode-btn.active-chill{border-color:var(--chill);background:var(--chill-light);color:var(--chill-dark)}
+.mode-btn.active-hype{border-color:var(--hype);background:var(--hype-light);color:var(--hype-dark)}
+.mode-btn:hover:not(.active-chill):not(.active-hype){border-color:var(--text3)}
+.mode-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0}
+
+/* STATS CARD */
+.stats-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem;box-shadow:var(--shadow)}
+.stats-card h3{font-family:'Fraunces',serif;font-size:.95rem;font-weight:600;margin-bottom:10px;color:var(--text)}
+.stat-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:.82rem}
+.stat-row:last-child{border-bottom:none;padding-bottom:0}
+.stat-name{color:var(--text2)}
+.stat-val{font-weight:700;font-size:.9rem}
+
+/* ACTION BTNS */
+.action-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem;box-shadow:var(--shadow)}
+.action-btn{width:100%;padding:10px 14px;border-radius:10px;border:1.5px solid var(--border2);background:var(--bg);font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .2s;color:var(--text2);margin-bottom:7px}
+.action-btn:last-child{margin-bottom:0}
+.action-btn:hover{background:var(--border);color:var(--text);border-color:var(--text3)}
+.action-btn.primary{background:var(--purple);border-color:var(--purple);color:#fff}
+.action-btn.primary:hover{filter:brightness(1.12)}
+
+/* KEY IDEA */
+.key-idea{background:var(--yellow-light);border:1px solid #fcd34d;border-radius:var(--radius);padding:.9rem 1.1rem;font-size:.82rem;color:#78350f;line-height:1.65;margin-top:1rem}
+.key-idea strong{color:#92400e}
+
+/* INSTRUCTION OVERLAY */
+.empty-hint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;opacity:.5;transition:opacity .3s}
+.empty-hint .hint-icon{font-size:2.2rem;margin-bottom:8px}
+.empty-hint p{font-size:.8rem;color:var(--text2);line-height:1.5}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-tag">🎵 ML Foundations · Decision Boundary</div>
+  <h1>Interactive Decision Boundary</h1>
+  <p>Click the chart to add songs. Watch the boundary line separate Chill from Hype in real time.</p>
+</div>
+
+<div class="main">
+
+  <!-- CHART -->
+  <div class="chart-card">
+    <div class="chart-label">Scatter plot — click anywhere to place a song</div>
+    <div class="chart-outer">
+      <span class="axis-label-y">Tempo →</span>
+      <div class="chart-wrap" id="chart-wrap">
+        <canvas id="chart-canvas"></canvas>
+        <div class="empty-hint" id="empty-hint">
+          <div class="hint-icon">👆</div>
+          <p>Click to place your first song<br>Choose Chill or Hype first →</p>
+        </div>
+      </div>
+    </div>
+    <div class="axis-label-x">Energy →</div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--chill)"></div>Chill</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--hype)"></div>Hype</div>
+      <div class="legend-item"><div style="width:24px;height:2px;background:var(--boundary);border-radius:2px;opacity:.7"></div>Decision boundary</div>
+    </div>
+    <div class="status-bar neutral" id="status-bar">
+      <span>Add at least one Chill and one Hype song to see the boundary.</span>
+    </div>
+    <div class="key-idea">
+      <strong>What you're seeing:</strong> The boundary line is the model's best guess at where Chill ends and Hype begins. Every time you add a song, the model re-draws it based on all the points so far.
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+
+    <div class="mode-card">
+      <h3>Place a song</h3>
+      <button class="mode-btn active-chill" id="btn-chill" onclick="setMode('chill')">
+        <div class="mode-dot" style="background:var(--chill)"></div>
+        🎵 Chill song
+      </button>
+      <button class="mode-btn" id="btn-hype" onclick="setMode('hype')">
+        <div class="mode-dot" style="background:var(--hype)"></div>
+        🔥 Hype song
+      </button>
+    </div>
+
+    <div class="stats-card">
+      <h3>Song count</h3>
+      <div class="stat-row">
+        <span class="stat-name">🎵 Chill songs</span>
+        <span class="stat-val" style="color:var(--chill-dark)" id="count-chill">0</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-name">🔥 Hype songs</span>
+        <span class="stat-val" style="color:var(--hype-dark)" id="count-hype">0</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-name">Boundary angle</span>
+        <span class="stat-val" style="color:var(--text)" id="boundary-angle">—</span>
+      </div>
+      <div class="stat-row" style="border-bottom:none">
+        <span class="stat-name">Accuracy</span>
+        <span class="stat-val" style="color:var(--text)" id="accuracy">—</span>
+      </div>
+    </div>
+
+    <div class="action-card">
+      <button class="action-btn primary" onclick="addRandomPoints()">✦ Add 5 random songs</button>
+      <button class="action-btn" onclick="undoLast()">↩ Undo last</button>
+      <button class="action-btn" onclick="clearAll()">✕ Clear all</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+var canvas = document.getElementById('chart-canvas');
+var ctx = canvas.getContext('2d');
+var wrap = document.getElementById('chart-wrap');
+var mode = 'chill';
+var points = []; // {x,y,label} — x,y in 0-1 range
+
+// ── RESIZE ──────────────────────────────────────────────────────────────────
+function resize() {
+  canvas.width  = wrap.offsetWidth;
+  canvas.height = wrap.offsetHeight;
+  draw();
+}
+window.addEventListener('resize', resize);
+
+// ── MODE ─────────────────────────────────────────────────────────────────────
+function setMode(m) {
+  mode = m;
+  document.getElementById('btn-chill').className = 'mode-btn' + (m==='chill'?' active-chill':'');
+  document.getElementById('btn-hype').className  = 'mode-btn' + (m==='hype'?' active-hype':'');
+}
+
+// ── CLICK TO ADD POINT ───────────────────────────────────────────────────────
+wrap.addEventListener('click', function(e) {
+  var rect = wrap.getBoundingClientRect();
+  var px = (e.clientX - rect.left)  / rect.width;
+  var py = (e.clientY - rect.top)   / rect.height;
+  // clip to chart area (leave padding for axes labels)
+  var pad = 0.06;
+  if (px < pad || px > 1-pad || py < pad || py > 1-pad) return;
+  points.push({ x: px, y: py, label: mode });
+  updateHint();
+  draw();
+  updateStats();
+});
+
+// ── DRAW ─────────────────────────────────────────────────────────────────────
+function draw() {
+  var W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // background shading if boundary exists
+  var bd = computeBoundary();
+  if (bd) {
+    // shade two regions
+    var img = ctx.createImageData(W, H);
+    for (var px = 0; px < W; px++) {
+      for (var py = 0; py < H; py++) {
+        var nx = px/W, ny = py/H;
+        var side = bd.a*nx + bd.b*ny + bd.c;
+        var idx = (py*W + px)*4;
+        if (side > 0) {
+          img.data[idx]   = 244; img.data[idx+1] = 114; img.data[idx+2] = 182; img.data[idx+3] = 22;
+        } else {
+          img.data[idx]   = 56;  img.data[idx+1] = 189; img.data[idx+2] = 248; img.data[idx+3] = 22;
+        }
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+
+  // grid lines
+  ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+  ctx.lineWidth = 1;
+  for (var i=1;i<5;i++) {
+    ctx.beginPath(); ctx.moveTo(W*i/5,0); ctx.lineTo(W*i/5,H); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,H*i/5); ctx.lineTo(W,H*i/5); ctx.stroke();
+  }
+
+  // decision boundary line
+  if (bd) {
+    ctx.save();
+    ctx.strokeStyle = '#2F3167';
+    ctx.lineWidth = 2.5;
+    ctx.setLineDash([]);
+    ctx.shadowColor = 'rgba(47,49,103,0.25)';
+    ctx.shadowBlur = 6;
+    // draw from x=0 to x=1
+    var y0 = (-bd.c - bd.a*0) / bd.b;
+    var y1 = (-bd.c - bd.a*1) / bd.b;
+    ctx.beginPath();
+    ctx.moveTo(0, y0*H);
+    ctx.lineTo(W, y1*H);
+    ctx.stroke();
+    ctx.restore();
+
+    // label
+    var midX = W*0.5, midY = (y0+y1)/2*H;
+    ctx.save();
+    ctx.font = '600 11px DM Sans, sans-serif';
+    ctx.fillStyle = '#2F3167';
+    ctx.textAlign = 'center';
+    var labelY = midY - 12;
+    if (labelY < 14) labelY = midY + 20;
+    ctx.fillText('Decision Boundary', midX, labelY);
+    ctx.restore();
+  }
+
+  // points
+  points.forEach(function(p) {
+    var cx = p.x * W, cy = p.y * H;
+    var col   = p.label==='chill' ? '#38bdf8' : '#f472b6';
+    var edge  = p.label==='chill' ? '#0369a1' : '#9d174d';
+    ctx.beginPath();
+    ctx.arc(cx, cy, 9, 0, Math.PI*2);
+    ctx.fillStyle = col;
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+    ctx.strokeStyle = edge;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  });
+}
+
+// ── LDA-STYLE OPTIMAL BOUNDARY ───────────────────────────────────────────────
+// Uses Fisher's Linear Discriminant: the optimal separating hyperplane
+// between two Gaussian classes. Far more accurate than raw centroid midpoint.
+function computeBoundary() {
+  var chills = points.filter(function(p){return p.label==='chill';});
+  var hypes  = points.filter(function(p){return p.label==='hype';});
+  if (!chills.length || !hypes.length) return null;
+
+  var cx = avg(chills,'x'), cy = avg(chills,'y');
+  var hx = avg(hypes,'x'),  hy = avg(hypes,'y');
+
+  // Within-class scatter (pooled covariance)
+  var swxx=0,swxy=0,swyy=0;
+  chills.forEach(function(p){
+    var dx=p.x-cx,dy=p.y-cy;
+    swxx+=dx*dx; swxy+=dx*dy; swyy+=dy*dy;
+  });
+  hypes.forEach(function(p){
+    var dx=p.x-hx,dy=p.y-hy;
+    swxx+=dx*dx; swxy+=dx*dy; swyy+=dy*dy;
+  });
+
+  var n = points.length;
+  swxx/=n; swxy/=n; swyy/=n;
+
+  // Add regularisation so we never get a singular matrix
+  var reg = 0.005;
+  swxx+=reg; swyy+=reg;
+
+  // Inverse of 2x2 symmetric matrix Sw
+  var det = swxx*swyy - swxy*swxy;
+  if (Math.abs(det) < 1e-10) det = 1e-10;
+  var ixx= swyy/det, ixy=-swxy/det, iyy= swxx/det;
+
+  // LDA direction w = Sw^-1 (mu_hype - mu_chill)
+  var dmx = hx-cx, dmy = hy-cy;
+  var wx = ixx*dmx + ixy*dmy;
+  var wy = ixy*dmx + iyy*dmy;
+
+  var wlen = Math.sqrt(wx*wx+wy*wy);
+  if (wlen < 1e-10) return null;
+  wx/=wlen; wy/=wlen;
+
+  // Threshold: midpoint of projected class means
+  var projC = wx*cx + wy*cy;
+  var projH = wx*hx + wy*hy;
+  var threshold = (projC + projH) / 2;
+
+  // Boundary: wx*x + wy*y = threshold
+  // Rewrite as: wx*x + wy*y - threshold = 0
+  // Sign convention: positive side = hype
+  var sign = (wx*hx + wy*hy - threshold) > 0 ? 1 : -1;
+  return { a: sign*wx, b: sign*wy, c: -sign*threshold };
+}
+
+function avg(arr, key) {
+  return arr.reduce(function(s,p){return s+p[key];},0)/arr.length;
+}
+
+// ── STATS ─────────────────────────────────────────────────────────────────────
+function updateStats() {
+  var nc = points.filter(function(p){return p.label==='chill';}).length;
+  var nh = points.filter(function(p){return p.label==='hype';}).length;
+  document.getElementById('count-chill').textContent = nc;
+  document.getElementById('count-hype').textContent  = nh;
+
+  var bd = computeBoundary();
+  var status = document.getElementById('status-bar');
+  var angleEl = document.getElementById('boundary-angle');
+  var accEl   = document.getElementById('accuracy');
+
+  if (!bd) {
+    status.className = 'status-bar neutral';
+    status.innerHTML = '<span>Add at least one Chill <em>and</em> one Hype song to see the boundary.</span>';
+    angleEl.textContent = '—';
+    accEl.textContent   = '—';
+    return;
+  }
+
+  // Angle of boundary line
+  var angle = Math.round(Math.atan2(-bd.a, bd.b) * 180 / Math.PI);
+  angleEl.textContent = angle + '°';
+
+  // Accuracy: how many points are on the correct side?
+  var correct = points.filter(function(p) {
+    var side = bd.a*p.x + bd.b*p.y + bd.c;
+    return (p.label==='hype' && side > 0)  || (p.label==='chill' && side <= 0);
+  }).length;
+  var acc = Math.round(correct/points.length*100);
+  accEl.textContent = acc + '%';
+  accEl.style.color = acc >= 80 ? '#065f46' : acc >= 60 ? '#92400e' : '#991b1b';
+
+  if (acc === 100) {
+    status.className = 'status-bar balanced';
+    status.innerHTML = '✓ Perfect separation! The boundary correctly classifies every song.';
+  } else if (nc >= 2 && nh >= 2) {
+    status.className = 'status-bar has-boundary';
+    status.innerHTML = '↻ Boundary updated — ' + acc + '% of songs correctly classified. Add more to refine it.';
+  } else {
+    status.className = 'status-bar has-boundary';
+    status.innerHTML = '↻ Boundary drawn. Add more songs on both sides to make it more accurate.';
+  }
+}
+
+// ── CONTROLS ─────────────────────────────────────────────────────────────────
+function addRandomPoints() {
+  // Add a natural spread: chill bottom-left, hype top-right with some overlap
+  // Chill: bottom-left cluster. Hype: top-right cluster.
+  var toAdd = [
+    {x:0.10+Math.random()*.28, y:0.60+Math.random()*.28, label:'chill'},
+    {x:0.08+Math.random()*.25, y:0.65+Math.random()*.22, label:'chill'},
+    {x:0.62+Math.random()*.25, y:0.08+Math.random()*.25, label:'hype'},
+    {x:0.65+Math.random()*.22, y:0.10+Math.random()*.22, label:'hype'},
+    {x:0.38+Math.random()*.22, y:0.38+Math.random()*.22, label: Math.random()>.5?'chill':'hype'},
+  ];
+  toAdd.forEach(function(p){ points.push(p); });
+  updateHint();
+  draw();
+  updateStats();
+}
+
+function undoLast() {
+  if (!points.length) return;
+  points.pop();
+  updateHint();
+  draw();
+  updateStats();
+}
+
+function clearAll() {
+  points = [];
+  updateHint();
+  draw();
+  updateStats();
+}
+
+function updateHint() {
+  document.getElementById('empty-hint').style.opacity = points.length ? '0' : '.5';
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', function() {
+  resize();
+  // seed with a few starter points so it's not blank
+  // Chill = low energy (left), slow tempo = large canvas-y (bottom-left)
+  // Hype  = high energy (right), fast tempo = small canvas-y (top-right)
+  // This naturally produces a downward-sloping boundary
+  points = [
+    {x:.12, y:.72, label:'chill'}, {x:.18, y:.68, label:'chill'},
+    {x:.22, y:.78, label:'chill'}, {x:.28, y:.65, label:'chill'},
+    {x:.16, y:.82, label:'chill'}, {x:.32, y:.75, label:'chill'},
+    {x:.72, y:.18, label:'hype'},  {x:.78, y:.12, label:'hype'},
+    {x:.82, y:.25, label:'hype'},  {x:.68, y:.22, label:'hype'},
+    {x:.76, y:.30, label:'hype'},  {x:.85, y:.15, label:'hype'},
+  ];
+  updateHint();
+  draw();
+  updateStats();
+});
+</script>
+</body>
+</html>

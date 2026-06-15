@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Instagram — Unsupervised Learning | ML Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f7f5f0; --surface:#fff; --border:#e8e3da; --border2:#d5cfc4;
+  --text:#1a1814; --text2:#6b6560; --text3:#9c9590;
+  --sp:#1DB954; --sp-light:#e8f8ee; --sp-mid:#c6efd4;
+  --ig-light:#fdf0f8; --ig-mid:#f7c5e0;
+  --gm:#2563eb; --gm-light:#eff6ff; --gm-mid:#bfdbfe;
+  --yellow:#f59e0b; --yellow-light:#fffbeb;
+  --red:#ef4444; --red-light:#fef2f2;
+  --green:#10b981; --green-light:#ecfdf5;
+  --purple:#2F3167;
+  --radius:14px;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.06);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* HEADER */
+.header{padding:2.2rem 1.5rem 1.6rem;text-align:center;max-width:580px;margin:0 auto;border-bottom:1px solid var(--border)}
+.header-tag{display:inline-block;background:var(--purple);color:#fff;font-size:.6rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;padding:4px 12px;border-radius:20px;margin-bottom:12px}
+.header h1{font-family:'Fraunces',serif;font-size:clamp(1.6rem,4vw,2.3rem);font-weight:700;line-height:1.2;margin-bottom:8px;letter-spacing:-.01em}
+.header p{font-size:.88rem;color:var(--text2);line-height:1.6}
+
+/* TABS */
+.tab-nav{display:flex;justify-content:center;gap:8px;padding:1.4rem 1rem;flex-wrap:wrap;max-width:700px;margin:0 auto}
+.tab-btn{display:flex;align-items:center;gap:8px;padding:10px 18px;border-radius:50px;border:1.5px solid var(--border2);background:var(--surface);color:var(--text2);font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:600;cursor:pointer;transition:all .2s;line-height:1.3;box-shadow:var(--shadow)}
+.tab-btn:hover{border-color:var(--text3);color:var(--text)}
+.tab-btn .tab-main{display:block;font-size:.82rem;color:var(--text)}
+.tab-btn .tab-sub{display:block;font-size:.62rem;color:var(--text3);font-weight:400;margin-top:1px}
+.tab-btn.active-spotify{background:var(--sp);border-color:var(--sp);color:#fff;box-shadow:0 4px 18px rgba(29,185,84,.3)}
+.tab-btn.active-spotify .tab-main,.tab-btn.active-spotify .tab-sub{color:#fff}
+.tab-btn.active-instagram{background:linear-gradient(135deg,#f09433,#e1306c,#833ab4);border-color:transparent;color:#fff;box-shadow:0 4px 18px rgba(225,48,108,.3)}
+.tab-btn.active-instagram .tab-main,.tab-btn.active-instagram .tab-sub{color:#fff}
+.tab-btn.active-game{background:var(--gm);border-color:var(--gm);color:#fff;box-shadow:0 4px 18px rgba(37,99,235,.3)}
+.tab-btn.active-game .tab-main,.tab-btn.active-game .tab-sub{color:#fff}
+
+/* PANELS */
+.panel{display:none}
+.panel.active{display:block;animation:fadeUp .28s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.panel-inner{max-width:680px;margin:0 auto;padding:0 1.25rem 3.5rem}
+.step{display:none}
+.step.active{display:block;animation:fadeUp .25s ease}
+
+/* STEP HEADER — thin, minimal */
+.step-header{padding:1.2rem 0 .9rem}
+.step-lbl{display:inline-flex;align-items:center;gap:6px;font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:3px 10px;border-radius:20px;margin-bottom:7px}
+.sp-lbl{background:var(--sp-mid);color:#0a5c28;border:1px solid #8dd4aa}
+.ig-lbl{background:var(--ig-mid);color:#7c1048;border:1px solid #f09bd0}
+.gm-lbl{background:var(--gm-mid);color:#1e3a8a;border:1px solid #93c5fd}
+.step-counter{font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:4px}
+.step-header h2{font-family:'Fraunces',serif;font-size:clamp(1.05rem,2.5vw,1.35rem);font-weight:600;line-height:1.25;color:var(--text);letter-spacing:-.01em}
+.step-header .caption{font-size:.83rem;color:var(--text2);line-height:1.55;margin-top:5px}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.2rem;margin-bottom:.9rem;box-shadow:var(--shadow)}
+.card-label{font-size:.67rem;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;font-weight:600;margin-bottom:10px}
+
+/* NAV */
+.step-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:1rem;flex-wrap:wrap}
+.nav-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 22px;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .18s;border:1.5px solid}
+.nav-btn:disabled{opacity:.3;cursor:not-allowed}
+.nav-btn.back{background:transparent;border-color:var(--border2);color:var(--text3)}
+.nav-btn.back:not(:disabled):hover{background:var(--border);color:var(--text)}
+.nav-btn.next-sp{background:var(--sp);border-color:var(--sp);color:#fff;box-shadow:0 2px 10px rgba(29,185,84,.35)}
+.nav-btn.next-sp:hover{filter:brightness(1.07)}
+.nav-btn.next-ig{background:linear-gradient(90deg,#e1306c,#833ab4);border-color:transparent;color:#fff}
+.nav-btn.next-ig:hover{filter:brightness(1.07)}
+.nav-btn.next-gm{background:var(--gm);border-color:var(--gm);color:#fff;box-shadow:0 2px 10px rgba(37,99,235,.3)}
+.nav-btn.next-gm:hover{filter:brightness(1.07)}
+.progress-dots{display:flex;gap:6px;align-items:center}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--border2);transition:all .25s}
+.dot.done{background:var(--text3)}
+.dot.active-sp{background:var(--sp);box-shadow:0 0 6px rgba(29,185,84,.5)}
+.dot.active-ig{background:#e1306c;box-shadow:0 0 6px rgba(225,48,108,.5)}
+.dot.active-gm{background:var(--gm);box-shadow:0 0 6px rgba(37,99,235,.5)}
+
+/* KEY IDEA — yellow strip, single sentence */
+.key-idea{background:var(--yellow-light);border:1px solid #fcd34d;border-radius:var(--radius);padding:.9rem 1.1rem;font-size:.84rem;color:#78350f;line-height:1.6;margin-bottom:.9rem}
+.key-idea strong{color:#92400e}
+
+/* ═══ SPOTIFY VISUALS ═══ */
+.track{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);transition:all .25s}
+.track.hl{border-color:var(--sp);background:var(--sp-light)}
+.track.hl-skip{border-color:#fca5a5;background:var(--red-light)}
+.track-art{width:44px;height:44px;border-radius:8px;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0}
+.track-name{font-weight:600;font-size:.9rem}
+.track-artist{font-size:.73rem;color:var(--text2);margin-top:2px}
+.t-badge{font-size:.72rem;padding:4px 11px;border-radius:20px;font-weight:600;white-space:nowrap;flex-shrink:0}
+.t-like{background:var(--sp-light);color:#0a5c28;border:1px solid var(--sp-mid)}
+.t-skip{background:var(--red-light);color:#991b1b;border:1px solid #fca5a5}
+.t-new{background:var(--yellow-light);color:#92400e;border:1px solid #fcd34d}
+
+/* Big feature bars */
+.feat-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.feat-icon{font-size:1.3rem;width:32px;text-align:center;flex-shrink:0}
+.feat-label{min-width:110px;font-size:.82rem;font-weight:500;color:var(--text2)}
+.feat-track{flex:1;height:12px;background:var(--border);border-radius:6px;overflow:hidden}
+.feat-fill{height:12px;border-radius:6px;width:0%;transition:width .7s cubic-bezier(.4,0,.2,1)}
+.feat-pct{min-width:36px;text-align:right;font-weight:700;font-size:.85rem;color:var(--text)}
+
+.match-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);margin-bottom:6px;font-size:.85rem;transition:all .25s}
+.match-row.yes{border-color:#86efac;background:var(--green-light)}
+.match-row.no{border-color:#fca5a5;background:var(--red-light);opacity:.6}
+.match-pct{font-weight:700;font-size:.85rem;margin-left:auto}
+
+.verdict{padding:14px 16px;border-radius:10px;font-size:1rem;font-weight:700;text-align:center;margin-top:10px}
+.verdict.like{background:var(--sp-light);border:2px solid var(--sp);color:#0a5c28}
+.verdict.skip{background:var(--red-light);border:2px solid var(--red);color:#991b1b}
+
+/* ═══ INSTAGRAM VISUALS ═══ */
+.user-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:8px}
+.ucard{padding:12px 6px;border-radius:12px;border:1px solid var(--border);background:var(--bg);text-align:center;transition:all .35s;cursor:default}
+.ucard.glow{border-color:#fbbf24;background:var(--yellow-light);animation:pop .5s ease}
+.ucard.c0{border-color:#86efac;background:var(--green-light)}
+.ucard.c1{border-color:#a5b4fc;background:#eff0ff}
+.ucard.c2{border-color:#f9a8d4;background:#fdf4fb}
+@keyframes pop{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+.u-av{font-size:1.6rem;margin-bottom:5px;line-height:1}
+.u-name{font-size:.72rem;font-weight:600;color:var(--text)}
+
+.beh-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;border:1px solid var(--border);background:var(--bg);margin-bottom:6px}
+.beh-icon{font-size:1.2rem;flex-shrink:0;width:28px;text-align:center}
+.beh-label{flex:1;font-size:.84rem;font-weight:500;color:var(--text2)}
+.beh-track{width:110px;height:10px;background:var(--border);border-radius:5px;overflow:hidden}
+.beh-fill{height:10px;border-radius:5px;width:0%;transition:width .7s}
+.beh-pct{min-width:34px;text-align:right;font-weight:700;font-size:.82rem;color:var(--text)}
+
+.cluster-card{border-radius:12px;padding:12px 14px;margin-bottom:7px;border:1px solid var(--border)}
+.cluster-card.c0{background:var(--green-light);border-color:#86efac}
+.cluster-card.c1{background:#eff0ff;border-color:#a5b4fc}
+.cluster-card.c2{background:#fdf4fb;border-color:#f9a8d4}
+.cluster-card h4{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px}
+.cluster-card.c0 h4{color:#065f46}
+.cluster-card.c1 h4{color:#3730a3}
+.cluster-card.c2 h4{color:#9d174d}
+.chip-row{display:flex;flex-wrap:wrap;gap:5px}
+.chip{font-size:.72rem;padding:3px 9px;border-radius:8px;font-weight:500}
+.chip0{background:#bbf7d0;color:#065f46}
+.chip1{background:#c7d2fe;color:#3730a3}
+.chip2{background:#fbcfe8;color:#9d174d}
+
+/* ═══ GAME VISUALS ═══ */
+.maze-wrap{display:flex;justify-content:center;margin-bottom:12px}
+.maze{display:grid;gap:5px;padding:14px;background:#f0ede8;border-radius:16px;border:1px solid var(--border2)}
+.cell{width:52px;height:52px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;border:1px solid var(--border);transition:all .22s;background:var(--surface)}
+.cell-wall{background:#e5e0d8;border-color:var(--border2)}
+.cell-player{background:#dbeafe;border-color:#93c5fd;box-shadow:0 0 10px rgba(37,99,235,.25)}
+.cell-goal{background:var(--green-light);border-color:#86efac;box-shadow:0 0 10px rgba(16,185,129,.25)}
+.cell-trap{background:var(--red-light);border-color:#fca5a5}
+.cell-visited{background:#eff6ff;border-color:#bfdbfe}
+.cell-aipath{background:#dbeafe;border-color:#60a5fa;box-shadow:0 0 8px rgba(37,99,235,.2)}
+.cell-bad{background:#fee2e2;border-color:#f87171;animation:shake .4s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+
+/* Big reward badge */
+.reward-big{display:flex;align-items:center;justify-content:center;gap:12px;border-radius:14px;padding:16px;margin:10px 0;font-family:'Fraunces',serif}
+.reward-big .rval{font-size:2.4rem;font-weight:700;line-height:1}
+.reward-big .rdesc{font-size:.85rem;line-height:1.4}
+.reward-big.pos{background:var(--green-light);border:2px solid #86efac}
+.reward-big.pos .rval{color:#065f46}
+.reward-big.pos .rdesc{color:#064e3b}
+.reward-big.neg{background:var(--red-light);border:2px solid #fca5a5}
+.reward-big.neg .rval{color:#991b1b}
+.reward-big.neg .rdesc{color:#7f1d1d}
+
+.trial-row{display:flex;align-items:center;gap:10px;padding:9px 13px;border-radius:10px;border:1px solid var(--border);background:var(--bg);margin-bottom:6px;font-size:.83rem;color:var(--text2)}
+.trial-num{font-weight:700;color:var(--gm);min-width:54px}
+
+.q-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);font-size:.83rem}
+.q-dir{min-width:88px;color:var(--text2)}
+.q-bg{flex:1;height:10px;background:var(--border);border-radius:5px;overflow:hidden}
+.q-fill{height:10px;border-radius:5px;transition:width .7s}
+.q-val{min-width:40px;text-align:right;font-weight:700;font-size:.85rem}
+
+/* Stat trio */
+.stat-trio{display:flex;gap:8px;margin-bottom:12px}
+.stat-box{flex:1;padding:12px 10px;border-radius:12px;text-align:center}
+.stat-box .sv{font-family:'Fraunces',serif;font-size:1.6rem;font-weight:700;line-height:1;margin-bottom:4px}
+.stat-box .sl{font-size:.68rem;font-weight:500}
+
+/* Pipeline row */
+.pipe-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:14px}
+.pipe-box{padding:9px 14px;border-radius:10px;font-size:.8rem;font-weight:600;text-align:center;flex:1;min-width:80px}
+.pipe-arrow{color:var(--text3);font-size:.9rem;flex-shrink:0}
+
+/* Recap definition box */
+.def-box{padding:18px 20px;border-radius:12px;margin-bottom:14px;text-align:center}
+.def-box span{font-family:'Fraunces',serif;font-size:1.05rem;font-weight:600;line-height:1.6}
+.def-sp{background:var(--sp-light);border:2px solid var(--sp)}
+.def-sp span{color:#0a4020}
+.def-ig{background:var(--ig-light);border:2px solid #e1306c}
+.def-ig span{color:#5c0d35}
+.def-gm{background:var(--gm-light);border:2px solid var(--gm)}
+.def-gm span{color:#1e3a8a}
+
+.recap-point{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;background:var(--bg);border:1px solid var(--border);margin-bottom:7px;font-size:.88rem;font-weight:500;color:var(--text)}
+.recap-point .ri{font-size:1.2rem;flex-shrink:0}
+
+.qcheck{padding:13px 15px;border-radius:12px;background:var(--yellow-light);border:1px solid #fcd34d;font-size:.83rem;color:#78350f;line-height:1.65}
+.qcheck strong{color:#92400e;display:block;margin-bottom:4px}
+.qcheck em{color:#92400e}
+
+@media(max-width:480px){.cell{width:44px;height:44px;font-size:1.1rem}.tab-btn{padding:8px 12px}}
+
+.panel{display:block!important}</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-tag">📸 ML Foundations · Unsupervised Learning</div>
+  <h1>Instagram: Unsupervised Learning</h1>
+  <p>Follow the steps to see how Instagram discovers user communities.</p>
+</div>
+<div class="panel" id="panel-instagram">
+<div class="panel-inner">
+
+  <div class="step" id="ig-1">
+    <div class="step-header">
+      <div class="step-lbl ig-lbl">📸 Unsupervised · Instagram</div>
+      <div class="step-counter">Step 1 of 6</div>
+      <h2>Billions of users — zero labels</h2>
+    </div>
+    <div class="card">
+      <div class="card-label">All users — no categories, no tags</div>
+      <div class="user-grid" id="ig1-grid"></div>
+      <div class="stat-trio" style="margin-top:14px">
+        <div class="stat-box" style="background:var(--ig-light);border:1px solid var(--ig-mid)">
+          <div class="sv" style="color:#7c1048">2B+</div><div class="sl" style="color:#9d174d">monthly users</div>
+        </div>
+        <div class="stat-box" style="background:var(--yellow-light);border:1px solid #fcd34d">
+          <div class="sv" style="color:#92400e">0</div><div class="sl" style="color:#78350f">manual labels</div>
+        </div>
+        <div class="stat-box" style="background:var(--green-light);border:1px solid #86efac">
+          <div class="sv" style="color:#065f46">∞</div><div class="sl" style="color:#064e3b">behaviour signals</div>
+        </div>
+      </div>
+    </div>
+    <div class="key-idea">How does Instagram personalise feeds with <strong>no labels at all?</strong> It finds groups on its own.</div>
+    <div class="step-nav">
+      <button class="nav-btn back" disabled>← Back</button>
+      <div class="progress-dots" id="ig-dots"></div>
+      <button class="nav-btn next-ig" onclick="igStep(2)">Next →</button>
+    </div>
+  </div>
+
+  <div class="step" id="ig-2">
+    <div class="step-header">
+      <div class="step-lbl ig-lbl">📸 Unsupervised · Instagram</div>
+      <div class="step-counter">Step 2 of 6</div>
+      <h2>It measures what you do, not who you are</h2>
+    </div>
+    <div class="card">
+      <div class="card-label">Alex's raw behaviour signals</div>
+      <div id="ig2-bars"></div>
+    </div>
+    <div class="key-idea">No label needed — just <strong>numbers from behaviour</strong>. These signals exist for every user automatically.</div>
+    <div class="step-nav">
+      <button class="nav-btn back" onclick="igStep(1)">← Back</button>
+      <div class="progress-dots" id="ig-dots"></div>
+      <button class="nav-btn next-ig" onclick="igStep(3)">Next →</button>
+    </div>
+  </div>
+
+  <div class="step" id="ig-3">
+    <div class="step-header">
+      <div class="step-lbl ig-lbl">📸 Unsupervised · Instagram</div>
+      <div class="step-counter">Step 3 of 6</div>
+      <h2>Some users behave almost identically</h2>
+    </div>
+    <div class="card">
+      <div class="card-label">Alex, Sam & Morgan — highlighted by the model</div>
+      <div class="user-grid" id="ig3-grid"></div>
+      <div style="margin-top:13px">
+        <div class="card-label" style="margin-bottom:8px">Users plotted by behaviour (2D)</div>
+        <svg id="ig3-scatter" width="100%" height="160" viewBox="0 0 280 160" style="display:block"></svg>
+        <div style="display:flex;gap:12px;justify-content:center;font-size:.72rem;color:var(--text2);margin-top:5px;flex-wrap:wrap">
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#10b981;margin-right:4px;vertical-align:middle"></span>Fitness</span>
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#6366f1;margin-right:4px;vertical-align:middle"></span>Gaming</span>
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#ec4899;margin-right:4px;vertical-align:middle"></span>Creative</span>
+        </div>
+      </div>
+    </div>
+    <div class="key-idea">Each colour is a cluster. The same colours appear on both the profiles and the chart — the model grouped them automatically.</div>
+    <div class="step-nav">
+      <button class="nav-btn back" onclick="igStep(2)">← Back</button>
+      <div class="progress-dots" id="ig-dots"></div>
+      <button class="nav-btn next-ig" onclick="igStep(4)">Next →</button>
+    </div>
+  </div>
+
+  <div class="step" id="ig-4">
+    <div class="step-header">
+      <div class="step-lbl ig-lbl">📸 Unsupervised · Instagram</div>
+      <div class="step-counter">Step 4 of 6</div>
+      <h2>Three communities emerge</h2>
+    </div>
+    <div class="card">
+      <div class="cluster-card c0"><h4>Fitness & wellness</h4><div class="chip-row"><span class="chip chip0">Alex</span><span class="chip chip0">Sam</span><span class="chip chip0">Morgan</span></div></div>
+      <div class="cluster-card c1"><h4>Gaming & tech</h4><div class="chip-row"><span class="chip chip1">Jamie</span><span class="chip chip1">Jordan</span><span class="chip chip1">Riley</span></div></div>
+      <div class="cluster-card c2"><h4>Creative & visual</h4><div class="chip-row"><span class="chip chip2">Taylor</span><span class="chip chip2">Casey</span><span class="chip chip2">Avery</span></div></div>
+      <div style="margin-top:13px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:center">
+        <svg id="ig4-donut" width="110" height="110" viewBox="0 0 110 110" style="flex-shrink:0"></svg>
+        <div style="font-size:.78rem;color:var(--text2);line-height:2">
+          <div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#10b981;margin-right:6px;vertical-align:middle"></span>Fitness — 3 users</div>
+          <div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#6366f1;margin-right:6px;vertical-align:middle"></span>Gaming — 3 users</div>
+          <div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#ec4899;margin-right:6px;vertical-align:middle"></span>Creative — 3 users</div>
+        </div>
+      </div>
+    </div>
+    <div class="key-idea">Zero labels used. The model <strong>discovered</strong> these groups entirely from raw behaviour.</div>
+    <div class="step-nav">
+      <button class="nav-btn back" onclick="igStep(3)">← Back</button>
+      <div class="progress-dots" id="ig-dots"></div>
+      <button class="nav-btn next-ig" onclick="igStep(5)">Next →</button>
+    </div>
+  </div>
+
+  <div class="step" id="ig-5">
+    <div class="step-header">
+      <div class="step-lbl ig-lbl">📸 Unsupervised · Instagram</div>
+      <div class="step-counter">Step 5 of 6</div>
+      <h2>Each cluster now sees a different feed</h2>
+    </div>
+    <div class="card">
+      <div class="cluster-card c0"><h4>Fitness cluster sees</h4><p style="font-size:.82rem;color:var(--text2);margin-top:4px">🏋️ Workout reels &nbsp;·&nbsp; 🥗 Nutrition ads &nbsp;·&nbsp; 🏅 Marathon events</p></div>
+      <div class="cluster-card c1"><h4>Gaming cluster sees</h4><p style="font-size:.82rem;color:var(--text2);margin-top:4px">🎮 Esports clips &nbsp;·&nbsp; 🖥️ Gear ads &nbsp;·&nbsp; 📺 Streamer highlights</p></div>
+      <div class="cluster-card c2"><h4>Creative cluster sees</h4><p style="font-size:.82rem;color:var(--text2);margin-top:4px">🎨 Design portfolios &nbsp;·&nbsp; 📷 Photography tips &nbsp;·&nbsp; 👗 Fashion drops</p></div>
+    </div>
+    <div class="key-idea">The discovered clusters drive <strong>real product decisions</strong> — ads, reels, recommendations.</div>
+    <div class="step-nav">
+      <button class="nav-btn back" onclick="igStep(4)">← Back</button>
+      <div class="progress-dots" id="ig-dots"></div>
+      <button class="nav-btn next-ig" onclick="igStep(6)">Recap →</button>
+    </div>
+  </div>
+
+  <div class="step" id="ig-6">
+    <div class="step-header">
+      <div class="step-lbl ig-lbl">📸 Unsupervised · Recap</div>
+      <div class="step-counter">Step 6 of 6</div>
+      <h2>What is unsupervised learning?</h2>
+    </div>
+    <div class="def-box def-ig"><span>Find hidden structure in <em>unlabelled</em> data — no right answers given, just patterns discovered.</span></div>
+    <div class="recap-point"><span class="ri">🚫</span>No labels — the model gets raw data with no answers</div>
+    <div class="recap-point"><span class="ri">🔍</span>It finds groups based on similarity in behaviour</div>
+    <div class="recap-point"><span class="ri">✨</span>Structure emerges automatically — no human assigns a label</div>
+    <div class="qcheck" style="margin-top:12px"><strong>💬 Quick check — If Instagram asked users "are you a gamer?" before grouping them, is that still unsupervised?</strong><em>No — asking for labels makes it supervised. Unsupervised means the model finds groups on its own.</em></div>
+    <div class="step-nav">
+      <button class="nav-btn back" onclick="igStep(5)">← Back</button>
+      <div class="progress-dots" id="ig-dots"></div>
+      <button class="nav-btn next-ig" style="opacity:1;cursor:default" disabled>✓ Complete</button>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+/* ══ MAZE ══════════════════════════════════════════ */
+var ROWS=4,COLS=5;
+var WALLS=[[0,3],[1,1],[1,3],[2,1],[3,3]];
+var TRAPS=[[1,0],[3,2]];
+var GOAL=[3,4];
+function isWall(r,c){return WALLS.some(function(w){return w[0]===r&&w[1]===c;})}
+function isTrap(r,c){return TRAPS.some(function(t){return t[0]===r&&t[1]===c;})}
+function isGoal(r,c){return GOAL[0]===r&&GOAL[1]===c}
+
+function buildMaze(id,player,visited,aiPath,trapFlash){
+  visited=visited||[];aiPath=aiPath||[];
+  var m=document.getElementById(id);if(!m)return;
+  m.style.gridTemplateColumns='repeat('+COLS+',52px)';
+  var h='';
+  for(var r=0;r<ROWS;r++) for(var c=0;c<COLS;c++){
+    var isV=visited.some(function(p){return p[0]===r&&p[1]===c});
+    var isA=aiPath.some(function(p){return p[0]===r&&p[1]===c});
+    var isBad=trapFlash&&trapFlash[0]===r&&trapFlash[1]===c;
+    var cls='cell ';var ic='';
+    if(isWall(r,c)){cls+='cell-wall';}
+    else if(player&&player[0]===r&&player[1]===c){cls+='cell-player';ic='🤖';}
+    else if(isGoal(r,c)){cls+='cell-goal';ic='🟢';}
+    else if(isTrap(r,c)&&isBad){cls+='cell-bad';ic='💥';}
+    else if(isTrap(r,c)){cls+='cell-trap';ic='🔴';}
+    else if(isA){cls+='cell-aipath';ic='·';}
+    else if(isV){cls+='cell-visited';ic=(r===0&&c===0)?'📍':'·';}
+    else{cls+='cell-empty';}
+    h+='<div class="'+cls+'">'+ic+'</div>';
+  }
+  m.innerHTML=h;
+}
+
+
+
+function showStep(pfx,n,tot){
+  for(var i=1;i<=tot;i++){var el=document.getElementById(pfx+'-'+i);if(el)el.classList.toggle('active',i===n);}
+  updateDots(pfx,n,tot);
+}
+function updateDots(pfx,cur,tot){
+  document.querySelectorAll('[id^="'+pfx+'-dots"]').forEach(function(c){
+    var h='';
+    for(var i=1;i<=tot;i++){var cl='dot';if(i<cur)cl+=' done';if(i===cur)cl+=' active-'+pfx;h+='<div class="'+cl+'"></div>';}
+    c.innerHTML=h;
+  });
+}
+
+/* ══ INSTAGRAM ════════════════════════════════════ */
+var igP=[
+  {n:'Alex',  e:'🏋️',c:0},{n:'Jamie',e:'🎮',c:1},{n:'Sam',  e:'🏃',c:0},
+  {n:'Taylor',e:'🎨',c:2},{n:'Jordan',e:'🕹️',c:1},{n:'Casey',e:'📸',c:2},
+  {n:'Morgan',e:'💪',c:0},{n:'Riley', e:'🎬',c:1},{n:'Avery',e:'🖌️',c:2},
+];
+
+function buildIG(id,mode){
+  var el=document.getElementById(id);if(!el)return;
+  el.className='user-grid';
+  el.innerHTML=igP.map(function(p,i){
+    var cls='ucard';
+    if(mode==='glow'&&[0,2,6].indexOf(i)!==-1)cls+=' glow';
+    if(mode==='clustered')cls+=' c'+p.c;
+    return '<div class="'+cls+'"><div class="u-av">'+p.e+'</div><div class="u-name">'+p.n+'</div></div>';
+  }).join('');
+}
+
+function buildBehBars(){
+  var behs=[
+    {ic:'❤️',l:'Likes fitness posts',v:.92,c:'#10b981'},
+    {ic:'👥',l:'Follows gym accounts',v:.88,c:'#10b981'},
+    {ic:'▶️',l:'Watches workout reels',v:.85,c:'#10b981'},
+    {ic:'🎮',l:'Engages with gaming',v:.07,c:'#6366f1'},
+    {ic:'🎨',l:'Engages with art',v:.05,c:'#ec4899'},
+  ];
+  var el=document.getElementById('ig2-bars');if(!el)return;
+  el.innerHTML=behs.map(function(b){
+    return '<div class="beh-row"><span class="beh-icon">'+b.ic+'</span>'
+      +'<span class="beh-label">'+b.l+'</span>'
+      +'<div class="beh-track"><div class="beh-fill" id="bh'+b.l.replace(/\W/g,'')+'" style="background:'+b.c+'"></div></div>'
+      +'<span class="beh-pct">'+Math.round(b.v*100)+'%</span></div>';
+  }).join('');
+  setTimeout(function(){behs.forEach(function(b){var bar=document.getElementById('bh'+b.l.replace(/\W/g,''));if(bar)bar.style.width=Math.round(b.v*100)+'%';});},60);
+}
+
+function buildIG3Scatter(){
+  var svg=document.getElementById('ig3-scatter');if(!svg)return;
+  var users=[
+    {n:'Alex', x:58, y:50,c:'#10b981',hi:true},{n:'Jamie',x:195,y:125,c:'#6366f1',hi:false},
+    {n:'Sam',  x:65, y:65,c:'#10b981',hi:true},{n:'Taylor',x:200,y:50,c:'#ec4899',hi:false},
+    {n:'Jordan',x:210,y:115,c:'#6366f1',hi:false},{n:'Casey',x:190,y:60,c:'#ec4899',hi:false},
+    {n:'Morgan',x:52, y:60,c:'#10b981',hi:true},{n:'Riley',x:205,y:135,c:'#6366f1',hi:false},
+    {n:'Avery',x:195,y:40,c:'#ec4899',hi:false},
+  ];
+  var h='<ellipse cx="58" cy="58" rx="28" ry="24" fill="#10b981" fill-opacity=".1" stroke="#86efac" stroke-width="1.5" stroke-dasharray="5,3"/>'
+    +'<ellipse cx="203" cy="125" rx="26" ry="20" fill="#6366f1" fill-opacity=".1" stroke="#a5b4fc" stroke-width="1.5" stroke-dasharray="5,3"/>'
+    +'<ellipse cx="195" cy="50" rx="26" ry="20" fill="#ec4899" fill-opacity=".1" stroke="#f9a8d4" stroke-width="1.5" stroke-dasharray="5,3"/>';
+  users.forEach(function(u){
+    var r=u.hi?9:7,sw=u.hi?2.5:1.5;
+    h+='<circle cx="'+u.x+'" cy="'+u.y+'" r="'+r+'" fill="'+u.c+'" stroke="#fff" stroke-width="'+sw+'"/>';
+    h+='<text x="'+(u.x+r+4)+'" y="'+(u.y+4)+'" font-size="9.5" fill="'+u.c+'" font-weight="600" font-family="DM Sans,sans-serif">'+u.n+'</text>';
+  });
+  svg.innerHTML=h;
+}
+
+function buildDonut(){
+  var svg=document.getElementById('ig4-donut');if(!svg)return;
+  var cx=55,cy=55,R=42,sw=18;
+  var segs=[{c:'#10b981',pct:33.3,off:0},{c:'#6366f1',pct:33.3,off:33.3},{c:'#ec4899',pct:33.4,off:66.6}];
+  var circ=2*Math.PI*R,h='';
+  segs.forEach(function(s){
+    var dash=(s.pct/100)*circ,gap=circ-dash,rot=-90+(s.off/100)*360;
+    h+='<circle cx="'+cx+'" cy="'+cy+'" r="'+R+'" fill="none" stroke="'+s.c+'" stroke-width="'+sw+'" stroke-dasharray="'+dash.toFixed(1)+' '+gap.toFixed(1)+'" transform="rotate('+rot+' '+cx+' '+cy+')" stroke-linecap="butt"/>';
+  });
+  h+='<circle cx="'+cx+'" cy="'+cy+'" r="'+(R-sw/2-2)+'" fill="#fff"/>';
+  h+='<text x="'+cx+'" y="'+cy+'" font-size="12" font-weight="700" fill="#1a1814" text-anchor="middle" dominant-baseline="middle" font-family="Fraunces,serif">9</text>';
+  svg.innerHTML=h;
+}
+
+var cIg=1;
+function igStep(n){
+  cIg=n;showStep('ig',n,6);
+  if(n===1)buildIG('ig1-grid','plain');
+  if(n===2)buildBehBars();
+  if(n===3){buildIG('ig3-grid','clustered');setTimeout(buildIG3Scatter,80);}
+  if(n===4)setTimeout(buildDonut,80);
+}
+
+
+
+document.addEventListener('DOMContentLoaded',function(){ igStep(1); buildIG('ig1-grid','plain'); });
+</script>
+</body>
+</html>
