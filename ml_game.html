@@ -244,7 +244,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   <div class="step" id="gm-1">
     <div class="step-header">
       <div class="step-lbl gm-lbl">🎮 Reinforcement · Gaming AI</div>
-      <div class="step-counter">Step 1 of 6</div>
+      <div class="step-counter">Step 1 of 5</div>
       <h2>No map. No rules. Total fog.</h2>
     </div>
     <div class="card">
@@ -265,7 +265,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   <div class="step" id="gm-2">
     <div class="step-header">
       <div class="step-lbl gm-lbl">🎮 Reinforcement · Gaming AI</div>
-      <div class="step-counter">Step 2 of 6</div>
+      <div class="step-counter">Step 2 of 5</div>
       <h2>Your turn — find the cheese 🧀</h2>
     </div>
     <div class="card">
@@ -296,7 +296,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   <div class="step" id="gm-3">
     <div class="step-header">
       <div class="step-lbl gm-lbl">🎮 Reinforcement · Gaming AI</div>
-      <div class="step-counter">Step 3 of 6</div>
+      <div class="step-counter">Step 3 of 5</div>
       <h2>That was reinforcement learning</h2>
     </div>
     <div class="card">
@@ -306,11 +306,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
         <div class="gstat"><div class="gv" id="gs3-traps" style="color:var(--red)">–</div><div class="gl">Traps learned</div></div>
         <div class="gstat"><div class="gv" id="gs3-score" style="color:var(--gm)">–</div><div class="gl">Final reward</div></div>
       </div>
-      <div class="recap-point"><span class="ri">🎲</span>You started blind and just <strong>tried</strong> moves</div>
-      <div class="recap-point"><span class="ri">🪤</span>A trap gave a <strong>punishment</strong> (−5) — a signal to avoid it</div>
-      <div class="recap-point"><span class="ri">🧀</span>The cheese gave a <strong>reward</strong> (+10) — a signal to repeat what worked</div>
+      <div class="recap-point"><span class="ri">🪤</span><span>A trap gave a <strong>punishment</strong> (−5) — a signal to avoid it</span></div>
+      <div class="recap-point"><span class="ri">🧀</span><span>The cheese gave a <strong>reward</strong> (+10) — a signal to repeat it</span></div>
+      <div style="margin-top:13px">
+        <div class="card-label" style="margin-bottom:7px">Keep trying and the reward climbs — over 100 attempts</div>
+        <svg id="gm4-curve" width="100%" height="75" viewBox="0 0 300 75" preserveAspectRatio="none" style="display:block"></svg>
+      </div>
     </div>
-    <div class="key-idea">No one told you the path. You learned it from <strong>rewards and punishments</strong> — exactly how an RL agent learns.</div>
+    <div class="key-idea">No one told you the path — you learned it from <strong>rewards and punishments</strong>. The more it tries, the better it gets.</div>
     <div class="step-nav">
       <button class="nav-btn back" onclick="gmStep(2)">← Back</button>
       <div class="progress-dots" id="gm-dots"></div>
@@ -321,56 +324,40 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   <div class="step" id="gm-4">
     <div class="step-header">
       <div class="step-lbl gm-lbl">🎮 Reinforcement · Gaming AI</div>
-      <div class="step-counter">Step 4 of 6</div>
-      <h2>The more it tries, the better it gets</h2>
+      <div class="step-counter">Step 4 of 5</div>
+      <h2>Call its first move, then watch it solve</h2>
     </div>
     <div class="card">
-      <div class="card-label">From the start — which first move did it learn to trust?</div>
-      <div id="gm4-q"></div>
-      <div style="margin-top:13px">
-        <div class="card-label" style="margin-bottom:7px">Reward improving over 100 attempts</div>
-        <svg id="gm4-curve" width="100%" height="75" viewBox="0 0 300 75" preserveAspectRatio="none" style="display:block"></svg>
-
+      <div class="card-label">After enough tries — which way does it step first from the start?</div>
+      <div class="dpad" id="gm4-predict" style="grid-template-rows:repeat(2,40px);margin:10px 0 4px">
+        <button class="dbtn up" data-dir="U" onclick="gmGuess(this)">↑</button>
+        <button class="dbtn left" data-dir="L" onclick="gmGuess(this)">←</button>
+        <button class="dbtn down" data-dir="D" onclick="gmGuess(this)">↓</button>
+        <button class="dbtn right" data-dir="R" onclick="gmGuess(this)">→</button>
       </div>
-    </div>
-    <div class="key-idea">Good moves earn a high score, risky moves a low one. None of this was <strong>programmed in</strong> — it was all discovered through trial and error.</div>
-    <div class="step-nav">
-      <button class="nav-btn back" onclick="gmStep(3)">← Back</button>
-      <div class="progress-dots" id="gm-dots"></div>
-      <button class="nav-btn next-gm" onclick="gmStep(5)">Next →</button>
-    </div>
-  </div>
-
-  <div class="step" id="gm-5">
-    <div class="step-header">
-      <div class="step-lbl gm-lbl">🎮 Reinforcement · Gaming AI</div>
-      <div class="step-counter">Step 5 of 6</div>
-      <h2>Now it solves the maze perfectly</h2>
-    </div>
-    <div class="card">
-      <div class="card-label">Optimal path — mouse finds cheese, avoids every trap</div>
-      <div class="maze-wrap"><div class="maze" id="gm5-maze"></div></div>
+      <div class="game-msg" id="gm4-guessmsg">Tap a direction to call its first move.</div>
+      <div class="maze-wrap" style="margin-top:12px"><div class="maze" id="gm5-maze"></div></div>
       <div class="reward-big pos" id="gm5-rew" style="display:none">
         <div class="rval">+10</div>
         <div class="rdesc">Cheese found! 🧀<br><span style="font-size:.75rem;opacity:.8">Every trap avoided</span></div>
       </div>
       <div class="btn-row" style="display:flex;gap:8px;margin-top:6px">
-        <button class="nav-btn next-gm" id="gm5-play" onclick="runFinalAI()" style="padding:9px 18px;font-size:.78rem">▶ Watch AI solve it</button>
+        <button class="nav-btn next-gm" id="gm5-play" onclick="runFinalAI()" style="padding:9px 18px;font-size:.78rem">▶ Watch it solve it</button>
         <button class="nav-btn back" id="gm5-reset" onclick="resetFinalAI()" style="display:none;padding:9px 18px;font-size:.78rem">↺ Replay</button>
       </div>
     </div>
     <div class="key-idea">Using what it learned, the AI now picks the best move at every step — no rules ever written.</div>
     <div class="step-nav">
-      <button class="nav-btn back" onclick="gmStep(4)">← Back</button>
+      <button class="nav-btn back" onclick="gmStep(3)">← Back</button>
       <div class="progress-dots" id="gm-dots"></div>
-      <button class="nav-btn next-gm" onclick="gmStep(6)">Recap →</button>
+      <button class="nav-btn next-gm" onclick="gmStep(5)">Recap →</button>
     </div>
   </div>
 
-  <div class="step" id="gm-6">
+  <div class="step" id="gm-5">
     <div class="step-header">
       <div class="step-lbl gm-lbl">🎮 Reinforcement · Recap</div>
-      <div class="step-counter">Step 6 of 6</div>
+      <div class="step-counter">Step 5 of 5</div>
       <h2>What is reinforcement learning?</h2>
     </div>
     <div class="def-box def-gm"><span>Learn the best actions through <em>trial and error</em> — guided only by rewards and punishments.</span></div>
@@ -379,7 +366,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="recap-point"><span class="ri">📈</span>Improves over many trials — no teacher, no labels</div>
     <div class="qcheck" style="margin-top:12px"><strong>💬 Quick check — A robot arm learns to pick things up by scoring thousands of attempts. Which type of ML?</strong><em>Reinforcement learning — trial and error with a reward signal, not labelled examples.</em></div>
     <div class="step-nav">
-      <button class="nav-btn back" onclick="gmStep(5)">← Back</button>
+      <button class="nav-btn back" onclick="gmStep(4)">← Back</button>
       <div class="progress-dots" id="gm-dots"></div>
       <button class="nav-btn next-gm" style="opacity:1;cursor:default" disabled>✓ Complete</button>
     </div>
@@ -547,9 +534,21 @@ document.addEventListener('keydown',function(e){
   if(handled)e.preventDefault();
 });
 
+/* Step 4 — call the first move before the reveal */
+function gmGuess(btn){
+  var d=btn.getAttribute('data-dir');
+  document.querySelectorAll('#gm4-predict .dbtn').forEach(function(b){
+    b.disabled=true;b.style.opacity='.45';
+    if(b.getAttribute('data-dir')==='R'){b.style.opacity='1';b.style.background='var(--green-light)';b.style.borderColor='var(--green)';b.style.color='#065f46';}
+  });
+  if(d!=='R'){btn.style.opacity='1';btn.style.background='var(--red-light)';btn.style.borderColor='var(--red)';btn.style.color='#991b1b';}
+  var m=document.getElementById('gm4-guessmsg');
+  if(m){m.className='game-msg '+(d==='R'?'win':'bad');m.innerHTML=(d==='R'?'✓ Right — ':'It actually goes Right — ')+'the safe first move it learned. Hit play:';}
+}
+
 var cGm=1;
 function gmStep(n){
-  cGm=n;showStep('gm',n,6);
+  cGm=n;showStep('gm',n,5);
   if(n===1)buildFogPreview('gm1-maze');
   if(n===2){if(!G)gameInit();renderFog();updateGameUI();}
   if(n===3){
@@ -557,9 +556,9 @@ function gmStep(n){
     if(a)a.textContent=G?G.attempts:'–';
     if(t)t.textContent=G?G.trapsFound:'–';
     if(s)s.textContent=G?((G.score>0?'+':'')+G.score):'–';
+    setTimeout(buildRewardCurve,80);
   }
-  if(n===4){buildQTable('gm4-q');setTimeout(buildRewardCurve,80);}
-  if(n===5)buildMaze('gm5-maze',[0,0],[],[],[]);
+  if(n===4)buildMaze('gm5-maze',[0,0],[],[],[]);
 }
 
 var aiIv=null;
