@@ -245,7 +245,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   <div class="step" id="ig-1">
     <div class="step-header">
       <div class="step-lbl ig-lbl">📸 Unsupervised · Instagram</div>
-      <div class="step-counter">Step 1 of 5</div>
+      <div class="step-counter">Step 1 of 4</div>
       <h2>Billions of users, zero labels</h2>
       <p class="caption">All Instagram has is behaviour. No one tags users as "gamer" or "foodie."</p>
     </div>
@@ -275,7 +275,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   <div class="step" id="ig-2">
     <div class="step-header">
       <div class="step-lbl ig-lbl">📸 Unsupervised · Instagram</div>
-      <div class="step-counter">Step 2 of 5</div>
+      <div class="step-counter">Step 2 of 4</div>
       <h2>Your call: who's in Alex's group?</h2>
     </div>
     <div class="card">
@@ -303,7 +303,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   <div class="step" id="ig-3">
     <div class="step-header">
       <div class="step-lbl ig-lbl">📸 Unsupervised · Instagram</div>
-      <div class="step-counter">Step 3 of 5</div>
+      <div class="step-counter">Step 3 of 4</div>
       <h2>Now <em>you</em> name the groups</h2>
     </div>
     <div class="card">
@@ -315,33 +315,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="step-nav">
       <button class="nav-btn back" onclick="igStep(2)">← Back</button>
       <div class="progress-dots" id="ig-dots"></div>
-      <button class="nav-btn next-ig" onclick="igStep(4)">Next →</button>
+      <button class="nav-btn next-ig" onclick="igStep(4)">Recap →</button>
     </div>
   </div>
 
   <div class="step" id="ig-4">
     <div class="step-header">
-      <div class="step-lbl ig-lbl">📸 Unsupervised · Instagram</div>
-      <div class="step-counter">Step 4 of 5</div>
-      <h2>So how does it know a <em>post</em> is "gaming"?</h2>
-    </div>
-    <div class="card">
-      <div class="card-label">A brand-new video gets uploaded. How does Instagram sort it?</div>
-      <div id="ig5-quiz"></div>
-      <div class="reveal" id="ig5-reveal"><strong>Same idea, now on the posts.</strong> Instagram groups posts by <strong>who watches and likes them</strong>. If the same users who love esports clips keep watching a new video, it lands in that group. No human tags each upload; the way people interact reveals the categories.</div>
-    </div>
-    <div class="key-idea">Users <em>and</em> posts are both grouped from <strong>behaviour</strong>, then matched to each other to build your feed.</div>
-    <div class="step-nav">
-      <button class="nav-btn back" onclick="igStep(3)">← Back</button>
-      <div class="progress-dots" id="ig-dots"></div>
-      <button class="nav-btn next-ig" onclick="igStep(5)">Recap →</button>
-    </div>
-  </div>
-
-  <div class="step" id="ig-5">
-    <div class="step-header">
       <div class="step-lbl ig-lbl">📸 Unsupervised · Recap</div>
-      <div class="step-counter">Step 5 of 5</div>
+      <div class="step-counter">Step 4 of 4</div>
       <h2>What is unsupervised learning?</h2>
     </div>
     <div class="def-box def-ig"><span>Find hidden structure in <em>unlabelled</em> data: the model sorts it into <em>clusters</em> by similarity, then humans interpret them.</span></div>
@@ -350,7 +331,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="recap-point"><span class="ri">🏷️</span><span>People label the groups afterward, a separate human step</span></div>
     <div class="qcheck" style="margin-top:12px"><strong>💬 Quick check: The model found 3 groups but no names. Did it do "unsupervised learning"?</strong><details><summary>Show answer</summary><em>Yes. Finding the groups is the unsupervised part. Naming them "fitness" or "gaming" is a human label added on top.</em></details></div>
     <div class="step-nav">
-      <button class="nav-btn back" onclick="igStep(4)">← Back</button>
+      <button class="nav-btn back" onclick="igStep(3)">← Back</button>
       <div class="progress-dots" id="ig-dots"></div>
       <button class="nav-btn next-ig" style="opacity:1;cursor:default" disabled>✓ Complete</button>
     </div>
@@ -486,29 +467,6 @@ function buildIG4(){
 }
 function igName(id,l){ igNames[id]=l; buildIG4(); }
 
-/* ── Step 5: how is content sorted? ── */
-function buildIG5(){
-  var el=document.getElementById('ig5-quiz');if(!el)return;
-  var opts=[
-    {t:'A reviewer at Instagram watches every upload and tags it',ok:false},
-    {t:'It groups the video with others the same users watch & like',ok:true},
-    {t:'The uploader must pick a category before posting',ok:false}
-  ];
-  el.innerHTML=opts.map(function(o,i){
-    return '<button class="quiz-opt" id="iqo'+i+'" data-ok="'+o.ok+'" onclick="igAnswer('+i+')">'+o.t+'</button>';
-  }).join('');
-}
-function igAnswer(i){
-  var opts=document.querySelectorAll('#ig5-quiz .quiz-opt');
-  opts.forEach(function(b){
-    b.disabled=true;
-    if(b.getAttribute('data-ok')==='true')b.classList.add('correct');
-  });
-  var chosen=document.getElementById('iqo'+i);
-  if(chosen&&chosen.getAttribute('data-ok')!=='true')chosen.classList.add('wrong');
-  var rev=document.getElementById('ig5-reveal');if(rev)rev.classList.add('show');
-}
-
 /* ── Step 2: predict who clusters with Alex ── */
 function buildIG2Predict(){
   var el=document.getElementById('ig2-predict');if(!el)return;
@@ -532,11 +490,10 @@ function igGuessGroup(i){
 
 var cIg=1;
 function igStep(n){
-  cIg=n;showStep('ig',n,5);
+  cIg=n;showStep('ig',n,4);
   if(n===1)buildBehBars();
   if(n===2){setTimeout(buildIG2Predict,40);setTimeout(buildIG3Scatter,80);}
   if(n===3)buildIG4();
-  if(n===4)buildIG5();
 }
 
 
